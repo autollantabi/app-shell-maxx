@@ -174,7 +174,7 @@ class ProductCard extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -183,6 +183,7 @@ class ProductCard extends StatelessWidget {
                     // Puntos centrados
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.emoji_events,
@@ -199,7 +200,7 @@ class ProductCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     // Botón canjear
                     Consumer<PointsProvider>(
                       builder: (context, pointsProvider, child) {
@@ -215,7 +216,7 @@ class ProductCard extends StatelessWidget {
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
-                                  vertical: 6,
+                                  vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.secondary,
@@ -235,15 +236,17 @@ class ProductCard extends StatelessWidget {
                             ),
                             // Mensaje de puntos faltantes
                             if (!hasEnoughPoints) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 'Te faltan ${product.points - pointsProvider.availablePoints} puntos',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontFamily: 'ShellTHAI',
                                   color: AppColors.textSecondary,
                                 ),
                                 textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ],
