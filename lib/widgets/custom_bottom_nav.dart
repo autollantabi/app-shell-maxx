@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../theme/app_colors.dart';
@@ -17,9 +18,16 @@ class CustomBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isAndroid = Platform.isAndroid;
+    // Altura base compacta: 40px + padding superior de 5px
+    // En Android: 40px + bottomPadding (para safe area) + 10px padding bottom
+    // En iOS: 40px + bottomPadding (si existe, para dispositivos con notch)
+    final totalHeight = isAndroid 
+        ? 40.0 + bottomPadding 
+        : 50.0 + (bottomPadding > 0 ? bottomPadding : 0);
     
-    return Container(
-      height: 56 + bottomPadding, // Altura más compacta
+    Widget content = Container(
+      height: totalHeight,
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -32,8 +40,8 @@ class CustomBottomNav extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.only(
-          top: 25,
-          bottom: bottomPadding,
+          top: isAndroid ? 5 : 20,
+          bottom: isAndroid ? 10 : (bottomPadding > 0 ? bottomPadding : 0),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -85,6 +93,16 @@ class CustomBottomNav extends StatelessWidget {
         ),
       ),
     );
+    
+    // Envolver con SafeArea solo en Android
+    if (isAndroid) {
+      return SafeArea(
+        top: false,
+        child: content,
+      );
+    }
+    
+    return content;
   }
 
   Widget _buildNavItem({
@@ -99,7 +117,7 @@ class CustomBottomNav extends StatelessWidget {
         onTap: () => onTap(index),
         behavior: HitTestBehavior.opaque,
         child: Container(
-          height: 56,
+          height: 40,
           alignment: Alignment.center,
           child: Container(
             width: 40,
