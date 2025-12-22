@@ -556,7 +556,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       right: 0,
                       child: GestureDetector(
                         onTap: () => Navigator.pop(sheetContext),
-                        child: Container(
+                        child: SizedBox(
                           width: 32,
                           height: 32,
 

@@ -43,7 +43,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Última actualización: ${_lastUpdate}',
+              'Última actualización: $_lastUpdate',
               style: TextStyle(
                 fontSize: 14,
                 fontFamily: 'ShellBook',

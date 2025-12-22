@@ -7,8 +7,8 @@ import 'models/api_response.dart';
 /// Configuración centralizada de la API
 class ApiConfig {
   // URL base de la API - Cambiar según tu entorno
-  static const String baseUrl = 'http://192.168.0.68:3202/api';
-  // static const String baseUrl = 'https://api.maxximundo.com/api/app-shell';
+  // static const String baseUrl = 'http://192.168.0.68:3202/api';
+  static const String baseUrl = 'https://api.maxximundo.com/api/app-shell';
 
   // Timeout para las peticiones (en segundos)
   static const int timeoutSeconds = 30;

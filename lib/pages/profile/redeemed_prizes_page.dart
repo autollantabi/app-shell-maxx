@@ -207,7 +207,7 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
               int currentProductPoints = pointsRedeemed;
 
               // Función auxiliar para obtener IS_ACTIVE de un producto
-              bool? _getIsActiveFromProduct(Map<String, dynamic>? prod) {
+              bool? getIsActiveFromProduct(Map<String, dynamic>? prod) {
                 if (prod == null) return null;
                 final isActiveValue = prod['IS_ACTIVE'] ?? prod['isActive'];
                 if (isActiveValue is bool) {
@@ -222,12 +222,12 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                   _availableProducts.containsKey(productId)) {
                 final availableProduct = _availableProducts[productId]!;
                 // Verificar IS_ACTIVE en el producto disponible
-                final availableIsActive = _getIsActiveFromProduct(
+                final availableIsActive = getIsActiveFromProduct(
                   availableProduct,
                 );
 
                 // Si no se puede determinar desde el producto disponible, usar el del canje como fallback
-                final canjeIsActive = _getIsActiveFromProduct(producto);
+                final canjeIsActive = getIsActiveFromProduct(producto);
 
                 // Priorizar el estado del producto disponible, pero si es null, usar el del canje
                 // Si ambos son null, asumir activo por defecto
@@ -243,7 +243,7 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                 );
               } else {
                 // Si no se encuentra en productos disponibles, verificar en el producto del canje
-                final canjeIsActive = _getIsActiveFromProduct(producto);
+                final canjeIsActive = getIsActiveFromProduct(producto);
 
                 // Si no se puede determinar desde el canje, asumir activo por defecto
                 // (el producto puede estar activo pero simplemente no estar en la lista cargada)
