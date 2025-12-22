@@ -429,6 +429,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     });
 
     try {
+      final categoryUpper = widget.category.toUpperCase().trim();
+      
       // Si el usuario es vendedor, no necesita dirección
       if (widget.user.isVendedorByRole) {
         // Vendedores no tienen direcciones, proceder directamente con el canje
@@ -437,8 +439,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         return;
       }
 
+      // Si la categoría es "EXPERIENCIAS", no necesita dirección (canje directo)
+      if (categoryUpper == 'EXPERIENCIAS' || categoryUpper.contains('EXPERIENCIA')) {
+        _selectedAddress = null;
+        _simulateApiProcess(context);
+        return;
+      }
+
       // Si la categoría NO es "MODO RELAX", mostrar diálogo de selección de dirección
-      final categoryUpper = widget.category.toUpperCase().trim();
       if (categoryUpper != 'MODO RELAX') {
         final selectedAddress = await _showAddressSelectionDialog(context);
         if (selectedAddress == null) {
@@ -517,12 +525,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         return;
       }
 
-      // Para vendedores, no se envía addressId (será null)
-      // Para manager e influenciador, addressId es requerido
+      // Para vendedores y experiencias, no se envía addressId (será null)
+      // Para manager e influenciador con otras categorías, addressId es requerido
       int? addressId;
+      final categoryUpper = widget.category.toUpperCase().trim();
+      final isExperiencias = categoryUpper == 'EXPERIENCIAS' || categoryUpper.contains('EXPERIENCIA');
 
-      if (widget.user.isVendedorByRole) {
-        // Vendedores no envían addressId
+      if (widget.user.isVendedorByRole || isExperiencias) {
+        // Vendedores y experiencias no envían addressId
         addressId = null;
       } else {
         // Manager e influenciador deben tener una dirección seleccionada

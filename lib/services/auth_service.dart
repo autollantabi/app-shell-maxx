@@ -51,7 +51,6 @@ class AuthService {
       // Llamar a la API de autenticación
       final apiResponse = await AuthApi.login(email: email, password: password);
 
-      print('apiResponse: ${apiResponse.data}');
       if (apiResponse.success) {
         // Obtener idSession de la respuesta
         String? idSession = apiResponse.getValue<String>('idSession');

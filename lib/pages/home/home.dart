@@ -160,17 +160,10 @@ class _ClubShellHomeState extends State<ClubShellHome> {
         userId: _currentUser.id,
       );
 
-      print('=== UPDATE LAST LOGIN - /auth/update-last-login ===');
-      print('userId: ${_currentUser.id}');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.message: ${apiResponse.message}');
-      print('===================================================');
 
       if (!apiResponse.success) {
-        print('Error al actualizar último login: ${apiResponse.message}');
       }
     } catch (e) {
-      print('Error al actualizar último login: $e');
       // No mostramos error al usuario, solo lo registramos
     }
   }
@@ -179,12 +172,6 @@ class _ClubShellHomeState extends State<ClubShellHome> {
     try {
       final apiResponse = await AuthApi.getCurrentUser();
 
-      print('=== PULL TO REFRESH - /auth/me ===');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.message: ${apiResponse.message}');
-      print('apiResponse.data: ${apiResponse.data}');
-      print('apiResponse.rawData: ${apiResponse.rawData}');
-      print('===================================');
 
       if (apiResponse.success && mounted) {
         // Obtener datos del usuario directamente de la respuesta
@@ -195,65 +182,40 @@ class _ClubShellHomeState extends State<ClubShellHome> {
         if (apiResponse.data != null &&
             apiResponse.data is Map<String, dynamic>) {
           final data = apiResponse.data as Map<String, dynamic>;
-          print('Data encontrado en apiResponse.data');
-          print('Data keys: ${data.keys.toList()}');
 
           // Verificar si tiene los campos del usuario (ID, NAME, etc.)
           if (data.containsKey('ID') || data.containsKey('id')) {
             userData = data;
-            print(
-              'Datos del usuario encontrados directamente en apiResponse.data',
-            );
           } else if (data.containsKey('usuarioData')) {
             // Fallback: si viene en usuarioData (para compatibilidad)
             userData = data['usuarioData'] as Map<String, dynamic>?;
-            print('usuarioData encontrado en data: $userData');
           }
         }
 
         // Si no está en data, intentar desde rawData['data']
         if (userData == null && apiResponse.rawData != null) {
-          print('Buscando en rawData...');
-          print('rawData keys: ${apiResponse.rawData!.keys.toList()}');
 
           if (apiResponse.rawData!.containsKey('data')) {
             final data = apiResponse.rawData!['data'];
-            print('data encontrado en rawData: $data');
             if (data is Map<String, dynamic>) {
-              print('data keys: ${data.keys.toList()}');
 
               // Verificar si tiene los campos del usuario directamente
               if (data.containsKey('ID') || data.containsKey('id')) {
                 userData = data;
-                print(
-                  'Datos del usuario encontrados directamente en rawData[data]',
-                );
               } else if (data.containsKey('usuarioData')) {
                 // Fallback: si viene en usuarioData
                 userData = data['usuarioData'] as Map<String, dynamic>?;
-                print('usuarioData encontrado en rawData[data]: $userData');
               }
             }
           } else if (apiResponse.rawData!.containsKey('usuarioData')) {
             // Fallback directo en rawData
             userData =
                 apiResponse.rawData!['usuarioData'] as Map<String, dynamic>?;
-            print('usuarioData encontrado en rawData: $userData');
           }
         }
 
         if (userData != null) {
-          print('UsuarioData final: $userData');
-          print(
-            'CARD_ID (cedula): ${userData['CARD_ID'] ?? userData['cardId'] ?? userData['cedula']}',
-          );
           final updatedUser = UserModel.fromJson(userData);
-          print(
-            'UserModel creado: ${updatedUser.name} - ${updatedUser.email} - Cedula: ${updatedUser.cedula}',
-          );
-          print(
-            'ROLE_ID: ${updatedUser.roleId} - Tipo: ${updatedUser.type} - isManager: ${updatedUser.isManagerByRole} - isVendedor: ${updatedUser.isVendedorByRole} - isInfluenciador: ${updatedUser.isInfluenciadorByRole}',
-          );
 
           // Guardar usuario actualizado en SharedPreferences
           final prefs = await SharedPreferences.getInstance();
@@ -271,13 +233,10 @@ class _ClubShellHomeState extends State<ClubShellHome> {
             widget.onUserUpdated!(updatedUser);
           }
         } else {
-          print('ERROR: No se encontraron datos del usuario en la respuesta');
         }
       } else {
-        print('ERROR: apiResponse.success = false o no mounted');
       }
     } catch (e) {
-      print('ERROR al cargar datos del usuario: $e');
       // Error al cargar datos del usuario, continuar con el usuario actual
     }
   }
@@ -586,22 +545,18 @@ class _ClubShellHomeState extends State<ClubShellHome> {
 
   void _navigateToFerrariPage() {
     // Aquí puedes navegar a una página específica de Ferrari
-    print('Navegando a página de Ferrari');
   }
 
   void _navigateToShellPromoPage() {
     // Aquí puedes navegar a una página de promociones Shell
-    print('Navegando a página de promociones Shell');
   }
 
   void _navigateToRacingPage() {
     // Aquí puedes navegar a una página de carreras
-    print('Navegando a página de carreras');
   }
 
   void _navigateToLoyaltyPage() {
     // Aquí puedes navegar a una página de lealtad
-    print('Navegando a página de lealtad');
   }
 
   Widget _buildBannerCarousel() {

@@ -60,9 +60,20 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(fontFamily: 'ShellBook'),
+        bodyMedium: TextStyle(fontFamily: 'ShellBook'),
+        bodySmall: TextStyle(fontFamily: 'ShellBook'),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
+        hintStyle: const TextStyle(
+          fontFamily: 'ShellBook',
+        ),
+        labelStyle: const TextStyle(
+          fontFamily: 'ShellBook',
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.border),

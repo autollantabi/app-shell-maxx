@@ -30,7 +30,6 @@ class _HelpPageState extends State<HelpPage> {
     } catch (e) {
       // Si falla, usar versión por defecto
       // Esto puede ocurrir si package_info_plus no está instalado
-      print('Error al cargar versión: $e');
     }
   }
 

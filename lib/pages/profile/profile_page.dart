@@ -39,7 +39,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _currentUser = widget.user;
-    print('currentUser: ${_currentUser.toJson()}');
     _loadUserData();
     // Cargar puntos al inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -368,13 +367,28 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Si no hay imagen local, intentar cargar desde la URL del servidor
     if (_currentUser.profileImage != null &&
-        _currentUser.profileImage!.isNotEmpty) {
-      String imageUrl = _currentUser.profileImage!;
+        _currentUser.profileImage!.isNotEmpty &&
+        _currentUser.profileImage!.trim().isNotEmpty) {
+      // Limpiar la URL: remover comillas, espacios y caracteres especiales
+      String imageUrl = _currentUser.profileImage!
+          .trim()
+          .replaceAll('"', '') // Remover comillas dobles
+          .replaceAll("'", '') // Remover comillas simples
+          .replaceAll(' ', ''); // Remover espacios
 
-      // Si la URL no es completa, construirla con la base URL
-      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-        imageUrl =
-            '${ApiConfig.baseUrl.replaceAll('/api', '')}/${imageUrl.replaceAll('\\', '/')}';
+      // Verificar si ya es una URL completa (http:// o https://)
+      final isCompleteUrl = imageUrl.startsWith('http://') || 
+                           imageUrl.startsWith('https://');
+
+      // Solo construir la URL si NO es completa (es relativa)
+      if (!isCompleteUrl) {
+        // Remover barras iniciales si existen
+        if (imageUrl.startsWith('/')) {
+          imageUrl = imageUrl.substring(1);
+        }
+        // Construir URL completa solo si es relativa
+        final baseUrl = ApiConfig.baseUrl.replaceAll('/api', '');
+        imageUrl = '$baseUrl/${imageUrl.replaceAll('\\', '/')}';
       }
 
       return Image.network(
@@ -698,13 +712,6 @@ class _ProfilePageState extends State<ProfilePage> {
         )[0];
       }
 
-      print('=== UPLOAD PROFILE IMAGE ===');
-      print('User ID: ${_currentUser.id}');
-      print('Image size: ${imageBytes.length} bytes');
-      print('Name: $name');
-      print('Lastname: $lastname');
-      print('===========================');
-
       // Llamar al API para actualizar usuario con imagen
       final apiResponse = await UserApi.updateUserWithImage(
         userId: _currentUser.id,
@@ -720,13 +727,6 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (!mounted) return;
-
-      print('=== API RESPONSE ===');
-      print('Success: ${apiResponse.success}');
-      print('Message: ${apiResponse.message}');
-      print('Data: ${apiResponse.data}');
-      print('Raw Data: ${apiResponse.rawData}');
-      print('===================');
 
       if (apiResponse.success) {
         // Limpiar imagen local para que se muestre desde el servidor
@@ -748,9 +748,6 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
       } else {
-        // Mostrar error más detallado
-        print('ERROR: La actualización falló');
-        print('Mensaje: ${apiResponse.message}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

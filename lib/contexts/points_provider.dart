@@ -38,20 +38,13 @@ class PointsProvider with ChangeNotifier {
           _currentMonthPoints = cachedCurrentMonthPoints ?? 0;
           _error = null;
 
-          print('=======================================');
-          print('Puntos cargados desde caché: $_availablePoints');
-          print('Puntos del mes desde caché: $_currentMonthPoints');
-          print('Caché válido hasta: ${timestamp.add(_cacheValidDuration)}');
-          print('=======================================');
 
           notifyListeners();
           return true;
         } else {
-          print('Caché de puntos expirado. Timestamp: $timestamp, Ahora: $now');
         }
       }
     } catch (e) {
-      print('Error al cargar puntos desde caché: $e');
     }
     return false;
   }
@@ -66,10 +59,7 @@ class PointsProvider with ChangeNotifier {
         _cacheTimestampKey,
         DateTime.now().toIso8601String(),
       );
-      print('Puntos guardados en caché: $points');
-      print('Puntos del mes guardados en caché: $currentMonthPoints');
     } catch (e) {
-      print('Error al guardar puntos en caché: $e');
     }
   }
 
@@ -103,29 +93,18 @@ class PointsProvider with ChangeNotifier {
     try {
       final apiResponse = await PointsApi.getMyPoints();
 
-      print('=== LOAD POINTS - /puntos/me ===');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.message: ${apiResponse.message}');
-      print('apiResponse.data type: ${apiResponse.data.runtimeType}');
-      print('apiResponse.data: ${apiResponse.data}');
 
       // Imprimir rawData si está disponible
       if (apiResponse.rawData != null) {
-        print('apiResponse.rawData: ${apiResponse.rawData}');
       }
 
-      print('================================');
 
       if (apiResponse.success && apiResponse.data != null) {
         final data = apiResponse.data as Map<String, dynamic>;
 
         // Imprimir todas las claves del objeto data
-        print('=== ESTRUCTURA DE DATA ===');
-        print('Keys en data: ${data.keys.toList()}');
         for (var key in data.keys) {
-          print('  $key: ${data[key]} (${data[key].runtimeType})');
         }
-        print('===========================');
 
         final availablePoints = data['availablePoints'] as int? ?? 0;
         final currentMonthPoints = data['currentMonthPoints'] as int? ?? 0;
@@ -133,8 +112,6 @@ class PointsProvider with ChangeNotifier {
         _currentMonthPoints = currentMonthPoints;
         _error = null;
 
-        print('Puntos disponibles extraídos: $_availablePoints');
-        print('Puntos del mes extraídos: $_currentMonthPoints');
 
         // Guardar en caché si se solicitó
         if (updateCache) {
@@ -145,14 +122,12 @@ class PointsProvider with ChangeNotifier {
         if (_availablePoints == 0) {
           _error = apiResponse.message;
         }
-        print('Error al cargar puntos: ${apiResponse.message}');
       }
     } catch (e) {
       // Solo mostrar error si no hay puntos en caché
       if (_availablePoints == 0) {
         _error = 'Error al cargar puntos: $e';
       }
-      print('Error al cargar puntos: $e');
     } finally {
       if (showLoading) {
         _isLoading = false;
@@ -184,9 +159,7 @@ class PointsProvider with ChangeNotifier {
       await prefs.remove(_cacheKey);
       await prefs.remove(_cacheCurrentMonthKey);
       await prefs.remove(_cacheTimestampKey);
-      print('Caché de puntos limpiado');
     } catch (e) {
-      print('Error al limpiar caché de puntos: $e');
     }
   }
 

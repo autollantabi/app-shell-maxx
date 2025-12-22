@@ -78,11 +78,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
     try {
       final apiResponse = await UserApi.getMyInfluencers();
 
-      print('=== CARGAR INFLUENCERS - /manager-influencers/my-influencers ===');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.data: ${apiResponse.data}');
-      print('apiResponse.rawData: ${apiResponse.rawData}');
-      print('=============================================================');
 
       if (apiResponse.success && mounted) {
         List<AssociatedProfile> profiles = [];
@@ -121,7 +116,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
               try {
                 actualData = jsonDecode(body) as Map<String, dynamic>?;
               } catch (e) {
-                print('Error al parsear body: $e');
               }
             }
           }
@@ -148,7 +142,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         });
       }
     } catch (e) {
-      print('Error al cargar perfiles: $e');
       setState(() {
         _isLoading = false;
       });
@@ -377,11 +370,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         associationId: profile.id,
       );
 
-      print('=== ELIMINAR ASOCIACIÓN ===');
-      print('ID: ${profile.id}');
-      print('success: ${apiResponse.success}');
-      print('data: ${apiResponse.data}');
-      print('========================');
 
       if (mounted) {
         if (apiResponse.success) {
@@ -412,7 +400,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         }
       }
     } catch (e) {
-      print('Error al eliminar perfil: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

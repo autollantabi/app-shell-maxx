@@ -79,14 +79,10 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
             final productId = (product['ID'] ?? product['id'] ?? '').toString();
             if (productId.isNotEmpty) {
               productsMap[productId] = product;
-              print(
-                'Producto cargado en mapa: ID=$productId, IS_ACTIVE=${product['IS_ACTIVE'] ?? product['isActive']}',
-              );
             }
           }
         }
 
-        print('Total productos disponibles cargados: ${productsMap.length}');
         if (mounted) {
           setState(() {
             _availableProducts = productsMap;
@@ -94,7 +90,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
         }
       }
     } catch (e) {
-      print('Error al cargar productos disponibles: $e');
     }
   }
 
@@ -111,7 +106,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
         });
       }
     } catch (e) {
-      print('Error al cargar puntos disponibles: $e');
     }
   }
 
@@ -164,6 +158,8 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
   }
 
   Future<void> _loadRedeemedPrizes() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
     });
@@ -171,11 +167,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
     try {
       final apiResponse = await PointsApi.getMyRedemptions();
 
-      print('=== LOAD REDEMPTIONS - /canjes/mis-canjes ===');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.message: ${apiResponse.message}');
-      print('apiResponse.data: ${apiResponse.data}');
-      print('=============================================');
 
       if (mounted) {
         if (apiResponse.success && apiResponse.data != null) {
@@ -194,13 +185,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
               final canjeId = canje['ID']?.toString() ?? '';
               final productId =
                   producto?['ID']?.toString() ?? producto?['id']?.toString();
-
-              print(
-                'Procesando canje: productId=$productId, nombre=$productName',
-              );
-              print(
-                'Productos disponibles en mapa: ${_availableProducts.keys.toList()}',
-              );
 
               // Buscar el producto en los productos disponibles para verificar su estado actual
               bool isActive = false;
@@ -237,10 +221,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                     availableProduct['POINTS'] as int? ??
                     availableProduct['points'] as int? ??
                     pointsRedeemed;
-
-                print(
-                  'Producto encontrado en disponibles: ID=$productId, IS_ACTIVE disponible=$availableIsActive, IS_ACTIVE canje=$canjeIsActive, final=$isActive, POINTS=$currentProductPoints',
-                );
               } else {
                 // Si no se encuentra en productos disponibles, verificar en el producto del canje
                 final canjeIsActive = getIsActiveFromProduct(producto);
@@ -248,10 +228,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                 // Si no se puede determinar desde el canje, asumir activo por defecto
                 // (el producto puede estar activo pero simplemente no estar en la lista cargada)
                 isActive = canjeIsActive ?? true;
-
-                print(
-                  'Producto NO encontrado en disponibles: ID=$productId, usando IS_ACTIVE del canje=$canjeIsActive, asumiendo isActive=$isActive',
-                );
               }
 
               final imageUrl = _getProductImageUrl(producto) ?? '';
@@ -278,7 +254,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
           setState(() {
             _isLoading = false;
           });
-          print('Error al cargar canjes: ${apiResponse.message}');
         }
       }
     } catch (e) {
@@ -287,7 +262,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
           _isLoading = false;
         });
       }
-      print('Error al cargar canjes: $e');
     }
   }
 

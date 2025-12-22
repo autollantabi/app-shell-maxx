@@ -66,13 +66,33 @@ class UserModel {
       );
     }
 
+    // Intentar obtener la imagen de perfil con múltiples variantes de nombres
+    String? profileImage;
+    profileImage = json['PERFIL_IMAGE_URL'] ?? 
+                   json['perfil_image_url'] ?? 
+                   json['PERFIL_IMAGE'] ??
+                   json['perfilImage'] ??
+                   json['perfil_image'] ??
+                   json['profileImage'] ??
+                   json['PROFILE_IMAGE'] ??
+                   json['PROFILE_IMAGE_URL'] ??
+                   json['image'] ??
+                   json['IMAGE'] ??
+                   json['avatar'] ??
+                   json['AVATAR'];
+    
+    // Si es null o string vacío, convertir a null
+    if (profileImage != null && (profileImage.toString().trim().isEmpty || profileImage.toString().toLowerCase() == 'null')) {
+      profileImage = null;
+    }
+
     return UserModel(
       id: id,
       name: fullName,
       email: email,
       type: userType,
       roleId: roleIdInt,
-      profileImage: json['PERFIL_IMAGE_URL'] ?? json['perfil_image_url'] ?? json['profileImage'],
+      profileImage: profileImage,
       cedula: cardId,
       dateOfBirth: birthDate != null ? DateTime.parse(birthDate.toString()) : null,
       phone: phone,

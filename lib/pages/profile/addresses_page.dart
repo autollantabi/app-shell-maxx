@@ -31,11 +31,6 @@ class _AddressesPageState extends State<AddressesPage> {
     try {
       final apiResponse = await UserApi.getUserAddress(widget.user.id);
 
-      print('=== CARGAR DIRECCIONES - /direcciones/user/${widget.user.id} ===');
-      print('apiResponse.success: ${apiResponse.success}');
-      print('apiResponse.data: ${apiResponse.data}');
-      print('apiResponse.rawData: ${apiResponse.rawData}');
-      print('==============================================================');
 
       // Verificar success basado en status code o status field
       final isSuccess =
@@ -57,15 +52,11 @@ class _AddressesPageState extends State<AddressesPage> {
                 addresses.add(item);
               }
             }
-            print(
-              'Direcciones encontradas en apiResponse.data (array): ${addresses.length}',
-            );
           } else if (apiResponse.data is Map<String, dynamic>) {
             // Si es un objeto único, convertirlo a array
             final data = apiResponse.data as Map<String, dynamic>;
             if (data.containsKey('ID_ADDRESS') || data.containsKey('ID_USER')) {
               addresses.add(data);
-              print('Dirección única encontrada en apiResponse.data');
             }
           }
         }
@@ -82,7 +73,6 @@ class _AddressesPageState extends State<AddressesPage> {
               try {
                 actualData = jsonDecode(body) as Map<String, dynamic>?;
               } catch (e) {
-                print('Error al parsear body: $e');
               }
             }
           }
@@ -97,15 +87,11 @@ class _AddressesPageState extends State<AddressesPage> {
                   addresses.add(item);
                 }
               }
-              print(
-                'Direcciones encontradas en rawData[body][data] (array): ${addresses.length}',
-              );
             } else if (data is Map<String, dynamic>) {
               // Si es un objeto único
               if (data.containsKey('ID_ADDRESS') ||
                   data.containsKey('ID_USER')) {
                 addresses.add(data);
-                print('Dirección única encontrada en rawData[body][data]');
               }
             }
           }
@@ -115,10 +101,8 @@ class _AddressesPageState extends State<AddressesPage> {
           _addresses = addresses;
         });
 
-        print('Total de direcciones cargadas: ${_addresses.length}');
       }
     } catch (e) {
-      print('Error al cargar direcciones: $e');
     } finally {
       if (mounted) {
         setState(() {

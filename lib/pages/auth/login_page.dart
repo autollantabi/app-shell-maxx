@@ -145,17 +145,10 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      print('apiResponse: $_userId');
-      print('apiResponse: ${_passwordController.text.trim()}');
       final apiResponse = await UserApi.updatePassword(
         userId: _userId!,
         password: _passwordController.text.trim(),
       );
-
-      print('apiResponse: ${apiResponse.success}');
-      print('apiResponse: ${apiResponse.message}');
-      print('apiResponse: ${apiResponse.data}');
-      print('apiResponse: ${apiResponse.rawData}');
 
       if (mounted) {
         if (apiResponse.success) {
@@ -300,9 +293,15 @@ class _LoginPageState extends State<LoginPage> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               enabled: _currentStep == LoginStep.email,
+                              style: const TextStyle(
+                                fontFamily: 'ShellBook',
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'Correo',
                                 hintText: 'Ingresa tu correo',
+                                hintStyle: const TextStyle(
+                                  fontFamily: 'ShellBook',
+                                ),
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -369,9 +368,17 @@ class _LoginPageState extends State<LoginPage> {
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
+                                style: const TextStyle(
+                                  fontFamily: 'ShellBook',
+                                  fontWeight: FontWeight.normal,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: 'Contraseña',
                                   hintText: 'Ingresa tu contraseña',
+                                  hintStyle: const TextStyle(
+                                    fontFamily: 'ShellBook',
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                   prefixIcon: const Icon(Icons.lock_outlined),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -477,9 +484,17 @@ class _LoginPageState extends State<LoginPage> {
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
+                                style: const TextStyle(
+                                  fontFamily: 'ShellBook',
+                                  fontWeight: FontWeight.normal,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: 'Contraseña',
                                   hintText: 'Ingresa tu nueva contraseña',
+                                  hintStyle: const TextStyle(
+                                    fontFamily: 'ShellBook',
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                   prefixIcon: const Icon(Icons.lock_outlined),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -518,9 +533,17 @@ class _LoginPageState extends State<LoginPage> {
                               TextFormField(
                                 controller: _confirmPasswordController,
                                 obscureText: _obscureConfirmPassword,
+                                style: const TextStyle(
+                                  fontFamily: 'ShellBook',
+                                  fontWeight: FontWeight.normal,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: 'Confirmar Contraseña',
                                   hintText: 'Confirma tu contraseña',
+                                  hintStyle: const TextStyle(
+                                    fontFamily: 'ShellBook',
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                   prefixIcon: const Icon(Icons.lock_outlined),
                                   suffixIcon: IconButton(
                                     icon: Icon(

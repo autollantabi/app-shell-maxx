@@ -139,9 +139,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         TextFormField(
                           controller: _newPasswordController,
                           obscureText: _obscureNewPassword,
+                          style: const TextStyle(
+                            fontFamily: 'ShellBook',
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Nueva contraseña',
                             hintText: 'Ingresa nueva contraseña',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'ShellBook',
+                            ),
                             prefixIcon: const Icon(Icons.lock_outlined),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -183,9 +189,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
+                          style: const TextStyle(
+                            fontFamily: 'ShellBook',
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Confirmar contraseña',
                             hintText: 'Confirma contraseña',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'ShellBook',
+                            ),
                             prefixIcon: const Icon(Icons.lock_outlined),
                             suffixIcon: IconButton(
                               icon: Icon(

@@ -229,11 +229,6 @@ class UserApi {
       fileNames['perfilImage'] = 'profile_image.jpg';
     }
 
-    print('=== UPDATE USER WITH IMAGE ===');
-    print('User ID: $userId');
-    print('Fields to send: $fields');
-    print('Files to send: ${files.keys.toList()}');
-    print('==============================');
 
     return await ApiConfig.patchMultipart<Map<String, dynamic>>(
       '/usuarios/$userId',

@@ -158,9 +158,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(
+                            fontFamily: 'ShellBook',
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Correo electrónico',
                             hintText: 'Correo electrónico',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'ShellBook',
+                            ),
                             prefixIcon: const Icon(Icons.email_outlined),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),

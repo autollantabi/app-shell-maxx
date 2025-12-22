@@ -103,7 +103,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
               _selectedDate = birthDate;
               _dateController.text = _formatDate(birthDate);
             } catch (e) {
-              print('Error al parsear fecha: $e');
+              // Error al parsear fecha, ignorar
             }
           }
         } else {
@@ -117,7 +117,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         });
       }
     } catch (e) {
-      print('Error al validar email: $e');
       if (mounted) {
         setState(() {
           _isValidatingEmail = false;
@@ -207,11 +206,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         )[0], // Formato YYYY-MM-DD
       };
 
-      print('=== AGREGAR/ACTUALIZAR INFLUENCER ===');
-      print('ID: $_influencerId');
-      print('Datos: $influencerData');
-      print('====================================');
-
       ApiResponse<Map<String, dynamic>> apiResponse;
 
       if (_influencerId != null && _influencerId!.isNotEmpty) {
@@ -232,27 +226,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
             influencerId: _influencerId!,
             notes: 'Reactivacion de usuario',
           );
-
-          print('=== ASOCIAR INFLUENCER ===');
-          print('success: ${associateResponse.success}');
-          print('data: ${associateResponse.data}');
-          print('========================');
-
-          // Si falla la asociación, mostrar error pero no bloquear el flujo
-          if (!associateResponse.success) {
-            print('Advertencia: No se pudo asociar el influencer al manager');
-          }
         }
       } else {
         // Si no existe, crear nuevo
         apiResponse = await UserApi.addInfluencer(influencerData);
       }
-
-      print('=== RESPUESTA API ===');
-      print('success: ${apiResponse.success}');
-      print('data: ${apiResponse.data}');
-      print('rawData: ${apiResponse.rawData}');
-      print('====================');
 
       if (mounted) {
         setState(() {
@@ -285,7 +263,6 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         }
       }
     } catch (e) {
-      print('Error al agregar influencer: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -341,10 +318,16 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                 children: [
                   TextFormField(
                     controller: _emailValidationController,
+                    style: const TextStyle(
+                      fontFamily: 'ShellBook',
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Dirección de correo',
                       border: OutlineInputBorder(),
                       hintText: 'ejemplo@correo.com',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'ShellBook',
+                      ),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
@@ -437,6 +420,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                   children: [
                     TextFormField(
                       controller: _nameController,
+                      style: const TextStyle(
+                        fontFamily: 'ShellBook',
+                        fontWeight: FontWeight.normal,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Nombre',
                         border: OutlineInputBorder(),
@@ -451,6 +438,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _lastNameController,
+                      style: const TextStyle(
+                        fontFamily: 'ShellBook',
+                        fontWeight: FontWeight.normal,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Apellido',
                         border: OutlineInputBorder(),
@@ -465,6 +456,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _idController,
+                      style: const TextStyle(
+                        fontFamily: 'ShellBook',
+                        fontWeight: FontWeight.normal,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'N° de identificación',
                         border: OutlineInputBorder(),
@@ -479,6 +474,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
+                      style: const TextStyle(
+                        fontFamily: 'ShellBook',
+                        fontWeight: FontWeight.normal,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Dirección de correo',
                         border: OutlineInputBorder(),
@@ -502,6 +501,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                           flex: 1,
                           child: TextFormField(
                             controller: _prefixController,
+                            style: const TextStyle(
+                              fontFamily: 'ShellBook',
+                              fontWeight: FontWeight.normal,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Prefijo',
                               border: OutlineInputBorder(),
@@ -520,6 +523,10 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                           flex: 2,
                           child: TextFormField(
                             controller: _phoneController,
+                            style: const TextStyle(
+                              fontFamily: 'ShellBook',
+                              fontWeight: FontWeight.normal,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Número de teléfono',
                               border: OutlineInputBorder(),

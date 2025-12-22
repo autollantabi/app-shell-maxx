@@ -59,8 +59,6 @@ class ApiConfig {
     // Agregar idSession de autenticación si es necesario
     if (includeAuth) {
       final idSession = await getIdSession();
-      print('------------------------------------------------------');
-      print('idSession: $idSession');
       if (idSession != null) {
         headers['id-session'] = idSession;
       }
@@ -369,16 +367,6 @@ class ApiConfig {
     try {
       final url = buildUrl(endpoint);
 
-      print('=== PATCH MULTIPART REQUEST ===');
-      print('URL: $url');
-      print('Fields: $fields');
-      print('Files count: ${files?.length ?? 0}');
-      if (files != null) {
-        files.forEach((key, bytes) {
-          print('File: $key, Size: ${bytes.length} bytes');
-        });
-      }
-
       // Crear request multipart
       final request = http.MultipartRequest('PATCH', Uri.parse(url));
 
@@ -404,9 +392,6 @@ class ApiConfig {
             contentType: http.MediaType.parse(contentType),
           );
           request.files.add(file);
-          print(
-            'Added file: $key, filename: $fileName, contentType: $contentType',
-          );
         });
       }
 
@@ -421,25 +406,6 @@ class ApiConfig {
       headers.remove('Content-Type');
       request.headers.addAll(headers);
 
-      // Verificar que los campos se agregaron correctamente
-      print('Request fields count: ${request.fields.length}');
-      print('Request files count: ${request.files.length}');
-      print('Request fields: ${request.fields}');
-      print('Headers: ${request.headers}');
-      print(
-        'Content-Type will be set by multipart: ${request.headers['Content-Type'] ?? 'auto-set'}',
-      );
-      print('==============================');
-
-      // Verificar el Content-Type final antes de enviar
-      final finalContentType = request.headers['Content-Type'];
-      if (finalContentType != null) {
-        print('Final Content-Type: $finalContentType');
-        if (!finalContentType.contains('multipart/form-data')) {
-          print('WARNING: Content-Type no contiene multipart/form-data!');
-        }
-      }
-
       // Enviar request
       final streamedResponse = await request.send().timeout(
         Duration(seconds: timeoutSeconds),
@@ -448,17 +414,8 @@ class ApiConfig {
       // Convertir streamed response a response normal
       final response = await http.Response.fromStream(streamedResponse);
 
-      print('=== PATCH MULTIPART RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('================================');
-
       return parseResponse<T>(response, dataParser: dataParser);
     } catch (e, stackTrace) {
-      print('=== PATCH MULTIPART ERROR ===');
-      print('Error: $e');
-      print('Stack: $stackTrace');
-      print('============================');
       return ApiResponse<T>.error(
         message: 'Error de conexión: ${e.toString()}',
       );
