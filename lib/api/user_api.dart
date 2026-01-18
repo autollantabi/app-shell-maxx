@@ -4,78 +4,6 @@ import '../models/api_response.dart';
 
 /// Endpoints relacionados con usuarios
 class UserApi {
-  /// Obtener lista de usuarios
-  static Future<ApiResponse<Map<String, dynamic>>> getUsers({
-    int? page,
-    int? limit,
-    String? search,
-    Map<String, String>? filters,
-  }) async {
-    final queryParams = <String, String>{};
-
-    if (page != null) queryParams['page'] = page.toString();
-    if (limit != null) queryParams['limit'] = limit.toString();
-    if (search != null && search.isNotEmpty) {
-      queryParams['search'] = search;
-    }
-
-    if (filters != null) {
-      queryParams.addAll(filters);
-    }
-
-    return await ApiConfig.getResponse<Map<String, dynamic>>(
-      '/users',
-      queryParams: queryParams.isNotEmpty ? queryParams : null,
-    );
-  }
-
-  /// Obtener un usuario por ID
-  static Future<ApiResponse<Map<String, dynamic>>> getUserById(
-    String userId,
-  ) async {
-    return await ApiConfig.getResponse<Map<String, dynamic>>('/users/$userId');
-  }
-
-  /// Crear un nuevo usuario
-  static Future<ApiResponse<Map<String, dynamic>>> createUser(
-    Map<String, dynamic> userData,
-  ) async {
-    return await ApiConfig.postResponse<Map<String, dynamic>>(
-      '/users',
-      body: userData,
-    );
-  }
-
-  /// Actualizar un usuario
-  static Future<ApiResponse<Map<String, dynamic>>> updateUser(
-    String userId,
-    Map<String, dynamic> userData,
-  ) async {
-    return await ApiConfig.putResponse<Map<String, dynamic>>(
-      '/users/$userId',
-      body: userData,
-    );
-  }
-
-  /// Eliminar un usuario
-  static Future<ApiResponse<Map<String, dynamic>>> deleteUser(
-    String userId,
-  ) async {
-    return await ApiConfig.deleteResponse<Map<String, dynamic>>(
-      '/users/$userId',
-    );
-  }
-
-  /// Actualizar perfil del usuario actual
-  static Future<ApiResponse<Map<String, dynamic>>> updateProfile(
-    Map<String, dynamic> profileData,
-  ) async {
-    return await ApiConfig.patchResponse<Map<String, dynamic>>(
-      '/users/profile',
-      body: profileData,
-    );
-  }
-
   /// Cambiar contraseña del usuario
   static Future<ApiResponse<Map<String, dynamic>>> changePassword({
     required String userId,
@@ -89,28 +17,6 @@ class UserApi {
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       },
-    );
-  }
-
-  /// Actualizar dirección del usuario
-  static Future<ApiResponse<Map<String, dynamic>>> updateAddress(
-    Map<String, dynamic> addressData,
-  ) async {
-    return await ApiConfig.patchResponse<Map<String, dynamic>>(
-      '/users/address',
-      body: addressData,
-    );
-  }
-
-  /// Subir imagen de perfil
-  static Future<ApiResponse<Map<String, dynamic>>> uploadProfileImage(
-    String imagePath,
-  ) async {
-    // Nota: Para subir archivos, necesitarías usar multipart/form-data
-    // Esto es un ejemplo básico, podrías necesitar ajustarlo según tu API
-    return await ApiConfig.postResponse<Map<String, dynamic>>(
-      '/users/profile-image',
-      body: {'imagePath': imagePath},
     );
   }
 

@@ -5,12 +5,16 @@ import '../api/points_api.dart';
 class PointsProvider with ChangeNotifier {
   int _availablePoints = 0;
   int _currentMonthPoints = 0;
+  int _accumulatedPoints = 0;
+  int _totalPoints = 0;
   bool _isLoading = false;
   String? _error;
 
   // Claves para el caché
   static const String _cacheKey = 'cached_points';
   static const String _cacheCurrentMonthKey = 'cached_current_month_points';
+  static const String _cacheAccumulatedKey = 'cached_accumulated_points';
+  static const String _cacheTotalPointsKey = 'cached_total_points';
   static const String _cacheTimestampKey = 'cached_points_timestamp';
   static const Duration _cacheValidDuration = Duration(
     hours: 1,
@@ -18,6 +22,8 @@ class PointsProvider with ChangeNotifier {
 
   int get availablePoints => _availablePoints;
   int get currentMonthPoints => _currentMonthPoints;
+  int get accumulatedPoints => _accumulatedPoints;
+  int get totalPoints => _totalPoints;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -27,6 +33,8 @@ class PointsProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final cachedPoints = prefs.getInt(_cacheKey);
       final cachedCurrentMonthPoints = prefs.getInt(_cacheCurrentMonthKey);
+      final cachedAccumulatedPoints = prefs.getInt(_cacheAccumulatedKey);
+      final cachedTotalPoints = prefs.getInt(_cacheTotalPointsKey);
       final timestampStr = prefs.getString(_cacheTimestampKey);
 
       if (cachedPoints != null && timestampStr != null) {
@@ -36,6 +44,8 @@ class PointsProvider with ChangeNotifier {
         if (now.difference(timestamp) < _cacheValidDuration) {
           _availablePoints = cachedPoints;
           _currentMonthPoints = cachedCurrentMonthPoints ?? 0;
+          _accumulatedPoints = cachedAccumulatedPoints ?? 0;
+          _totalPoints = cachedTotalPoints ?? 0;
           _error = null;
 
 
@@ -50,11 +60,13 @@ class PointsProvider with ChangeNotifier {
   }
 
   /// Guardar puntos en caché
-  Future<void> _savePointsToCache(int points, int currentMonthPoints) async {
+  Future<void> _savePointsToCache(int points, int currentMonthPoints, int accumulatedPoints, int totalPoints) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_cacheKey, points);
       await prefs.setInt(_cacheCurrentMonthKey, currentMonthPoints);
+      await prefs.setInt(_cacheAccumulatedKey, accumulatedPoints);
+      await prefs.setInt(_cacheTotalPointsKey, totalPoints);
       await prefs.setString(
         _cacheTimestampKey,
         DateTime.now().toIso8601String(),
@@ -108,14 +120,19 @@ class PointsProvider with ChangeNotifier {
 
         final availablePoints = data['availablePoints'] as int? ?? 0;
         final currentMonthPoints = data['currentMonthPoints'] as int? ?? 0;
+        final accumulatedPoints = data['accumulatedPoints'] as int? ?? 
+                                  data['puntosAcumulados'] as int? ?? 0;
+        final totalPoints = data['totalPoints'] as int? ?? 0;
         _availablePoints = availablePoints;
         _currentMonthPoints = currentMonthPoints;
+        _accumulatedPoints = accumulatedPoints;
+        _totalPoints = totalPoints;
         _error = null;
 
 
         // Guardar en caché si se solicitó
         if (updateCache) {
-          await _savePointsToCache(availablePoints, currentMonthPoints);
+          await _savePointsToCache(availablePoints, currentMonthPoints, accumulatedPoints, totalPoints);
         }
       } else {
         // Solo mostrar error si no hay puntos en caché
@@ -137,13 +154,19 @@ class PointsProvider with ChangeNotifier {
   }
 
   /// Actualizar puntos manualmente (útil después de un canje)
-  void updatePoints(int newPoints, {int? newCurrentMonthPoints}) {
+  void updatePoints(int newPoints, {int? newCurrentMonthPoints, int? newAccumulatedPoints, int? newTotalPoints}) {
     _availablePoints = newPoints;
     if (newCurrentMonthPoints != null) {
       _currentMonthPoints = newCurrentMonthPoints;
     }
+    if (newAccumulatedPoints != null) {
+      _accumulatedPoints = newAccumulatedPoints;
+    }
+    if (newTotalPoints != null) {
+      _totalPoints = newTotalPoints;
+    }
     // Actualizar caché cuando se actualiza manualmente
-    _savePointsToCache(newPoints, _currentMonthPoints);
+    _savePointsToCache(newPoints, _currentMonthPoints, _accumulatedPoints, _totalPoints);
     notifyListeners();
   }
 
@@ -158,6 +181,8 @@ class PointsProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_cacheKey);
       await prefs.remove(_cacheCurrentMonthKey);
+      await prefs.remove(_cacheAccumulatedKey);
+      await prefs.remove(_cacheTotalPointsKey);
       await prefs.remove(_cacheTimestampKey);
     } catch (e) {
     }
@@ -167,6 +192,8 @@ class PointsProvider with ChangeNotifier {
   void reset() {
     _availablePoints = 0;
     _currentMonthPoints = 0;
+    _accumulatedPoints = 0;
+    _totalPoints = 0;
     _isLoading = false;
     _error = null;
     notifyListeners();

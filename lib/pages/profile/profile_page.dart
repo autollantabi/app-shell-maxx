@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_colors.dart';
 import '../../models/user_model.dart';
@@ -106,11 +108,21 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    await _loadUserData();
+    if (mounted) {
+      context.read<PointsProvider>().refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
           // Header amarillo con información del perfil
           Container(
             width: double.infinity,
@@ -141,19 +153,15 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             child: ClipOval(child: _buildProfileImage()),
                           ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: _isUploadingImage
-                                  ? null
-                                  : () => _handleEditProfilePhoto(context),
+                          // Mostrar indicador de carga solo si está subiendo Y no hay imagen local
+                          if (_isUploadingImage && _profileImageBytes == null)
+                            Positioned(
+                              top: 0,
+                              right: 0,
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: _isUploadingImage
-                                      ? Colors.grey
-                                      : AppColors.textSecondary,
+                                  color: AppColors.textSecondary,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
@@ -165,26 +173,47 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                   ],
                                 ),
-                                child: _isUploadingImage
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
+                                child: const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else if (!_isUploadingImage)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () => _handleEditProfilePhoto(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.textSecondary,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.1,
                                         ),
-                                      )
-                                    : const Icon(
-                                        Icons.edit_outlined,
-                                        size: 16,
-                                        color: Colors.white,
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
                                       ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -206,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'RUC ${_currentUser.cedula ?? 'N/A'}',
+                            'ID ${_currentUser.cedula ?? 'N/A'}',
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: 'ShellBook',
@@ -349,6 +378,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -391,11 +421,17 @@ class _ProfilePageState extends State<ProfilePage> {
         imageUrl = '$baseUrl/${imageUrl.replaceAll('\\', '/')}';
       }
 
+      // Agregar timestamp para evitar caché y forzar la recarga
+      final separator = imageUrl.contains('?') ? '&' : '?';
+      imageUrl = '$imageUrl${separator}t=${DateTime.now().millisecondsSinceEpoch}';
+
       return Image.network(
         imageUrl,
         fit: BoxFit.cover,
         width: 80,
         height: 80,
+        cacheWidth: 80, // Especificar ancho para optimización
+        cacheHeight: 80, // Especificar alto para optimización
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
@@ -632,20 +668,28 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        imageQuality: 100,
       );
 
       if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        if (!mounted) return;
+        // Recortar la imagen
+        final croppedFile = await _cropImage(File(pickedFile.path));
+        
+        if (croppedFile != null) {
+          final bytes = await croppedFile.readAsBytes();
+          if (!mounted) return;
 
-        // Actualizar UI inmediatamente
-        setState(() {
-          _profileImageBytes = bytes;
-        });
+          // Actualizar UI inmediatamente para mostrar la imagen seleccionada
+          setState(() {
+            _profileImageBytes = bytes;
+          });
+          
+          // Esperar un frame para asegurar que la UI se actualice antes de iniciar la subida
+          await Future.delayed(const Duration(milliseconds: 50));
 
-        // Subir imagen al servidor
-        await _uploadProfileImage(bytes);
+          // Subir imagen al servidor en segundo plano
+          _uploadProfileImage(bytes);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -666,16 +710,24 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        if (!mounted) return;
+        // Recortar la imagen
+        final croppedFile = await _cropImage(File(pickedFile.path));
+        
+        if (croppedFile != null) {
+          final bytes = await croppedFile.readAsBytes();
+          if (!mounted) return;
 
-        // Actualizar UI inmediatamente
-        setState(() {
-          _profileImageBytes = bytes;
-        });
+          // Actualizar UI inmediatamente para mostrar la imagen capturada
+          setState(() {
+            _profileImageBytes = bytes;
+          });
+          
+          // Esperar un frame para asegurar que la UI se actualice antes de iniciar la subida
+          await Future.delayed(const Duration(milliseconds: 50));
 
-        // Subir imagen al servidor
-        await _uploadProfileImage(bytes);
+          // Subir imagen al servidor en segundo plano
+          _uploadProfileImage(bytes);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -685,6 +737,38 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  /// Recorta la imagen usando image_cropper
+  Future<File?> _cropImage(File imageFile) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imageFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Recortar imagen',
+            toolbarColor: AppColors.secondary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Recortar imagen',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 100,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      return croppedFile != null ? File(croppedFile.path) : null;
+    } catch (e) {
+      // Si hay error al recortar, devolver la imagen original
+      return imageFile;
     }
   }
 
@@ -729,16 +813,11 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       if (apiResponse.success) {
-        // Limpiar imagen local para que se muestre desde el servidor
-        if (mounted) {
-          setState(() {
-            _profileImageBytes = null;
-          });
-        }
-
-        // Recargar datos del usuario actualizado
-        await _loadUserData();
-
+        // Recargar datos del usuario actualizado en segundo plano (sin actualizar UI)
+        // No limpiamos _profileImageBytes para mantener la imagen local visible
+        // y evitar el efecto de recarga visual
+        _loadUserData();
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

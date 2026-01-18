@@ -259,18 +259,18 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
         Container(
           width: double.infinity,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.only(top: 12, bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.secondary,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
           ),
           child: Column(
             children: [
-              // Primera fila: PDV y puntos
+              // Primera fila: Puntos disponibles
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18.0,
-                  vertical: 16.0,
+                  vertical: 20.0,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -281,16 +281,16 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _currentUser.name,
+                            'Puntos disponibles',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 16,
                               fontFamily: 'ShellBold',
                             ),
                           ),
                           Text(
-                            'RUC ${_currentUser.cedula ?? 'N/A'}',
-                            style: TextStyle(
-                              fontSize: 12,
+                            'Puntos acumulados',
+                            style: const TextStyle(
+                              fontSize: 10,
                               fontFamily: 'ShellBook',
                             ),
                           ),
@@ -337,24 +337,30 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                                         ),
                                       );
                                     }
-                                    return Text(
-                                      pointsProvider.availablePoints.toString(),
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontFamily: 'ShellBold',
-                                        height: 1.0,
-                                      ),
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          pointsProvider.availablePoints.toString(),
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontFamily: 'ShellBold',
+                                            height: 1.0,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          pointsProvider.totalPoints.toString(),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontFamily: 'ShellBook',
+                                            height: 1.0,
+                                          ),
+                                        ),
+                                      ],
                                     );
                                   },
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Puntos',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontFamily: 'ShellTHAI',
-                                    height: 1.0,
-                                  ),
                                 ),
                               ],
                             ),
@@ -363,7 +369,7 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                       ],
                     ),
                   ],
-                ),
+                  ),
               ),
             ],
           ),

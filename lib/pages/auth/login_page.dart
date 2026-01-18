@@ -270,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Logo Shell
                       Center(
                         child: Image.asset(
-                          'assets/images/brand/logo-2.png',
+                          'assets/images/brand/1-LOGO-CLUB-SHELL-MAXX2.jpeg',
                           width: 150,
                         ),
                       ),

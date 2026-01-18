@@ -33,7 +33,7 @@ class _IntroPageState extends State<IntroPage> {
           children: [
             // Logo de Shell
             Image.asset(
-              'assets/images/brand/logo-2.png',
+              'assets/images/brand/1-LOGO-CLUB-SHELL-MAXX.png',
               width: 200,
               height: 200,
               fit: BoxFit.contain,

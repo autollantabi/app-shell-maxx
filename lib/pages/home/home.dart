@@ -311,11 +311,11 @@ class _ClubShellHomeState extends State<ClubShellHome> {
               ),
               child: Column(
                 children: [
-                  // Primera fila: PDV y puntos
+                  // Primera fila: Puntos disponibles
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18.0,
-                      vertical: 16.0,
+                      vertical: 20.0,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -326,17 +326,10 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                _currentUser.name,
+                                'Puntos disponibles',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontFamily: 'ShellBold',
-                                ),
-                              ),
-                              Text(
-                                'RUC ${_currentUser.cedula ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
                             ],
@@ -394,15 +387,6 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                                         );
                                       },
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Puntos',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontFamily: 'ShellTHAI',
-                                        height: 1.0,
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ],
@@ -412,7 +396,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                       ],
                     ),
                   ),
-                  // Segunda fila: Puntos del mes
+                  // Segunda fila: Puntos acumulados
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -431,31 +415,15 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                     ),
                     child: Consumer<PointsProvider>(
                       builder: (context, pointsProvider, child) {
-                        final now = DateTime.now();
-                        final monthNames = [
-                          'Enero',
-                          'Febrero',
-                          'Marzo',
-                          'Abril',
-                          'Mayo',
-                          'Junio',
-                          'Julio',
-                          'Agosto',
-                          'Septiembre',
-                          'Octubre',
-                          'Noviembre',
-                          'Diciembre',
-                        ];
-                        final currentMonth = monthNames[now.month - 1];
-                        final monthlyPoints = pointsProvider.isLoading
+                        final totalPoints = pointsProvider.isLoading
                             ? 0
-                            : pointsProvider.currentMonthPoints;
+                            : pointsProvider.totalPoints;
 
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Puntos de $currentMonth:',
+                              'Puntos acumulados:',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontFamily: 'ShellTHAI',
@@ -464,7 +432,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Text(
-                                monthlyPoints.toString(),
+                                totalPoints.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontFamily: 'ShellTHAI',
@@ -562,152 +530,148 @@ class _ClubShellHomeState extends State<ClubShellHome> {
   Widget _buildBannerCarousel() {
     final bannerItems = _getBannerItems();
 
-    return SizedBox(
-      width: double.infinity,
-      height: 180,
-      child: Column(
-        children: [
-          // Carrusel de banners
-          SizedBox(
-            height: 160,
-            child: PageView.builder(
-              controller: _bannerController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentBannerIndex = index;
-                });
-              },
-              itemCount: bannerItems.length,
-              itemBuilder: (context, index) {
-                final item = bannerItems[index];
-                return GestureDetector(
-                  onTap: item['action'],
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: AssetImage(item['image']),
-                        fit: BoxFit.cover,
-                        onError: (exception, stackTrace) {
-                          // Si la imagen no existe, usar color de fondo
-                        },
-                      ),
+    return Column(
+      children: [
+        // Carrusel de banners
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _bannerController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
+            itemCount: bannerItems.length,
+            itemBuilder: (context, index) {
+              final item = bannerItems[index];
+              return GestureDetector(
+                onTap: item['action'],
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: AssetImage(item['image']),
+                      fit: BoxFit.cover,
+                      onError: (exception, stackTrace) {
+                        // Si la imagen no existe, usar color de fondo
+                      },
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.3),
-                            Colors.black.withValues(alpha: 0.7),
-                          ],
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Logo Shell
-                          Positioned(
-                            top: 16,
-                            left: 16,
-                            child: Image.asset(
-                              'assets/images/brand/logo-shell.png',
-                              width: 40,
-                              height: 40,
-                            ),
-                          ),
-                          // Badge
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                item['badge'],
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Texto principal
-                          Positioned(
-                            left: 16,
-                            top: 60,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item['title'],
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  item['subtitle'],
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.secondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Texto descriptivo
-                          Positioned(
-                            left: 16,
-                            bottom: 20,
-                            child: Text(
-                              item['description'],
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.3),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
+                    child: Stack(
+                      children: [
+                        // Logo Shell
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          child: Image.asset(
+                            'assets/images/brand/logo-shell.png',
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        // Badge
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              item['badge'],
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Texto principal
+                        Positioned(
+                          left: 16,
+                          top: 60,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['title'],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                item['subtitle'],
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Texto descriptivo
+                        Positioned(
+                          left: 16,
+                          bottom: 20,
+                          child: Text(
+                            item['description'],
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Indicadores de carrusel dinámicos
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              bannerItems.length,
-              (index) => Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  color: _currentBannerIndex == index
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
                 ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Indicadores de carrusel dinámicos
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            bannerItems.length,
+            (index) => Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: _currentBannerIndex == index
+                    ? AppColors.primary
+                    : Colors.grey.withValues(alpha: 0.4),
+                shape: BoxShape.circle,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

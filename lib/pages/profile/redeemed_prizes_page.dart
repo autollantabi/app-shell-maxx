@@ -1,17 +1,23 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_colors.dart';
 import '../../api/points_api.dart';
 import '../../api.dart';
 import '../../api/gifts_api.dart';
 import '../../contexts/points_provider.dart';
+import '../../models/user_model.dart';
+import '../../pages/gifts/product_detail_page.dart';
 
 class RedeemedPrize {
   final String id;
   final String name;
   final String imageUrl;
   final String redeemedDate;
-  final int points;
+  final int points; // Precio actual del producto
+  final int pointsRedeemed; // Puntos que se gastaron en el canje
+  final int quantity; // Cantidad de productos canjeados
   final bool isAvailable;
   final String?
   productId; // ID del producto para comparar con productos disponibles
@@ -22,6 +28,8 @@ class RedeemedPrize {
     required this.imageUrl,
     required this.redeemedDate,
     required this.points,
+    required this.pointsRedeemed,
+    required this.quantity,
     required this.isAvailable,
     this.productId,
   });
@@ -54,6 +62,11 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
     await Future.wait([_loadAvailableProducts(), _loadAvailablePoints()]);
     // Luego cargar los canjes para poder comparar con productos disponibles
     await _loadRedeemedPrizes();
+  }
+
+  Future<void> _refreshData() async {
+    // Recargar todos los datos
+    await _loadData();
   }
 
   Future<void> _loadAvailableProducts() async {
@@ -167,7 +180,6 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
     try {
       final apiResponse = await PointsApi.getMyRedemptions();
 
-
       if (mounted) {
         if (apiResponse.success && apiResponse.data != null) {
           final data = apiResponse.data as Map<String, dynamic>;
@@ -181,14 +193,22 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
               final productName =
                   producto?['NAME'] as String? ?? 'Producto sin nombre';
               final redemptionDate = canje['REDEMPTION_DATE'] as String? ?? '';
-              final pointsRedeemed = canje['POINTS_REDEEMED'] as int? ?? 0;
+              
+              // Asegurar que pointsRedeemed siempre sea un int válido
+              final pointsRedeemedValue = canje['POINTS_REDEEMED'];
+              final pointsRedeemed = (pointsRedeemedValue is int)
+                  ? pointsRedeemedValue
+                  : (pointsRedeemedValue is num)
+                      ? pointsRedeemedValue.toInt()
+                      : 0;
+              
               final canjeId = canje['ID']?.toString() ?? '';
               final productId =
                   producto?['ID']?.toString() ?? producto?['id']?.toString();
 
               // Buscar el producto en los productos disponibles para verificar su estado actual
               bool isActive = false;
-              int currentProductPoints = pointsRedeemed;
+              int currentProductPoints = 0; // Precio actual del producto
 
               // Función auxiliar para obtener IS_ACTIVE de un producto
               bool? getIsActiveFromProduct(Map<String, dynamic>? prod) {
@@ -217,10 +237,11 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                 // Si ambos son null, asumir activo por defecto
                 isActive = availableIsActive ?? canjeIsActive ?? true;
 
+                // Obtener el precio actual del producto
                 currentProductPoints =
                     availableProduct['POINTS'] as int? ??
                     availableProduct['points'] as int? ??
-                    pointsRedeemed;
+                    0;
               } else {
                 // Si no se encuentra en productos disponibles, verificar en el producto del canje
                 final canjeIsActive = getIsActiveFromProduct(producto);
@@ -228,6 +249,26 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                 // Si no se puede determinar desde el canje, asumir activo por defecto
                 // (el producto puede estar activo pero simplemente no estar en la lista cargada)
                 isActive = canjeIsActive ?? true;
+
+                // Intentar obtener el precio del producto del canje
+                currentProductPoints =
+                    producto?['POINTS'] as int? ??
+                    producto?['points'] as int? ??
+                    0;
+              }
+
+              // Calcular la cantidad basándose en POINTS_REDEEMED / precio del producto
+              int finalQuantity = 1; // Valor por defecto
+              
+              if (currentProductPoints > 0 && pointsRedeemed > 0) {
+                try {
+                  final calculatedQuantity = (pointsRedeemed / currentProductPoints).round();
+                  // Asegurar que la cantidad sea al menos 1
+                  finalQuantity = calculatedQuantity < 1 ? 1 : calculatedQuantity;
+                } catch (e) {
+                  // Si hay error en el cálculo, usar 1
+                  finalQuantity = 1;
+                }
               }
 
               final imageUrl = _getProductImageUrl(producto) ?? '';
@@ -239,6 +280,8 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                   imageUrl: imageUrl,
                   redeemedDate: _formatDate(redemptionDate),
                   points: currentProductPoints,
+                  pointsRedeemed: pointsRedeemed,
+                  quantity: finalQuantity,
                   isAvailable: isActive,
                   productId: productId,
                 ),
@@ -292,7 +335,16 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _redeemedPrizes.isEmpty
-          ? _buildEmptyState()
+          ? RefreshIndicator(
+              onRefresh: _refreshData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _buildEmptyState(),
+                ),
+              ),
+            )
           : Consumer<PointsProvider>(
               builder: (context, pointsProvider, child) {
                 // Actualizar puntos disponibles desde el provider
@@ -307,17 +359,20 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                   });
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
+                return RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    itemCount: _redeemedPrizes.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (context, index) {
+                      return _buildPrizeItem(_redeemedPrizes[index]);
+                    },
                   ),
-                  itemCount: _redeemedPrizes.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: AppColors.border),
-                  itemBuilder: (context, index) {
-                    return _buildPrizeItem(_redeemedPrizes[index]);
-                  },
                 );
               },
             ),
@@ -387,7 +442,9 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  prize.name,
+                  prize.quantity > 1
+                      ? '${prize.name} '
+                      : prize.name,
                   style: const TextStyle(
                     fontSize: 12,
                     fontFamily: 'ShellHeavy',
@@ -413,13 +470,24 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      prize.points.toString(),
+                      prize.pointsRedeemed.toString(),
                       style: const TextStyle(
                         fontSize: 12,
                         fontFamily: 'ShellBold',
                         color: AppColors.textPrimary,
                       ),
                     ),
+                    if (prize.quantity > 1) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '(x${prize.quantity})',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontFamily: 'ShellBook',
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -473,6 +541,7 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
     }
 
     // Si el producto está disponible pero no tiene puntos suficientes
+    // Usar el precio actual del producto para la comparación
     final hasEnoughPoints = availablePoints >= prize.points;
     final missingPoints = prize.points - availablePoints;
 
@@ -540,13 +609,174 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
     );
   }
 
-  void _handleRedeemAgain(RedeemedPrize prize) {
-    // TODO: Implementar lógica para canjear nuevamente
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Canjeando ${prize.name}...'),
-        backgroundColor: AppColors.secondary,
-      ),
-    );
+  Future<void> _handleRedeemAgain(RedeemedPrize prize) async {
+    // Obtener el usuario actual desde SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString('user_session');
+      
+      if (userJson == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No se pudo obtener la información del usuario'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+      final user = UserModel.fromJson(userMap);
+
+      // Obtener el producto desde _availableProducts o desde el canje
+      Map<String, dynamic>? productData;
+      
+      if (prize.productId != null && _availableProducts.containsKey(prize.productId)) {
+        productData = _availableProducts[prize.productId];
+      }
+
+      // Si no está en productos disponibles, intentar obtenerlo desde el API
+      if (productData == null && prize.productId != null) {
+        try {
+          final apiResponse = await GiftsApi.getGifts();
+          if (apiResponse.success && apiResponse.data != null) {
+            List<dynamic> products = [];
+            if (apiResponse.data is List) {
+              products = apiResponse.data as List;
+            } else if (apiResponse.data is Map<String, dynamic>) {
+              final data = apiResponse.data as Map<String, dynamic>;
+              if (data.containsKey('productos') && data['productos'] is List) {
+                products = data['productos'] as List;
+              }
+            }
+
+            for (var product in products) {
+              if (product is Map<String, dynamic>) {
+                final productId = (product['ID'] ?? product['id'] ?? '').toString();
+                if (productId == prize.productId) {
+                  productData = product;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Error al obtener producto, continuar con datos disponibles
+        }
+      }
+
+      // Si aún no tenemos datos del producto, usar los datos del prize
+      if (productData == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No se pudo obtener la información del producto'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Obtener las imágenes del producto
+      final List<String> imageUrls = [];
+      
+      // Intentar obtener imágenes de ROUTES
+      if (productData.containsKey('ROUTES') && productData['ROUTES'] is List) {
+        final routes = productData['ROUTES'] as List;
+        for (var route in routes) {
+          if (route is Map && route.containsKey('URL')) {
+            final url = route['URL'] as String?;
+            if (url != null && url.isNotEmpty) {
+              imageUrls.add(url);
+            }
+          }
+        }
+      }
+
+      // Fallback a imagePath si no hay ROUTES
+      String? fallbackImageUrl;
+      if (imageUrls.isEmpty) {
+        if (productData.containsKey('IMAGE_PATH')) {
+          final imagePath = productData['IMAGE_PATH'] as String?;
+          if (imagePath != null && imagePath.isNotEmpty) {
+            fallbackImageUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}/${imagePath.replaceAll('\\', '/')}';
+            imageUrls.add(fallbackImageUrl);
+          }
+        } else if (productData.containsKey('RUTA')) {
+          final ruta = productData['RUTA'] as String?;
+          if (ruta != null && ruta.isNotEmpty) {
+            fallbackImageUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}/${ruta.replaceAll('\\', '/')}';
+            imageUrls.add(fallbackImageUrl);
+          }
+        }
+      }
+
+      // Usar la imagen del prize si no hay otras disponibles
+      if (imageUrls.isEmpty && prize.imageUrl.isNotEmpty) {
+        imageUrls.add(prize.imageUrl);
+      }
+
+      // Obtener datos del producto
+      final productName = productData['NAME'] as String? ?? 
+                          productData['name'] as String? ?? 
+                          prize.name;
+      final productPoints = productData['POINTS'] as int? ?? 
+                            productData['points'] as int? ?? 
+                            prize.points;
+      final productDescription = productData['DESCRIPTION'] as String? ?? 
+                                 productData['description'] as String? ?? 
+                                 '';
+      final productCategory = productData['CATEGORY'] as String? ?? 
+                              productData['category'] as String? ?? 
+                              '';
+      final productId = (productData['ID'] ?? productData['id'] ?? prize.productId ?? '').toString();
+
+      // Obtener puntos disponibles
+      final availablePoints = context.read<PointsProvider>().availablePoints;
+
+      // Navegar a ProductDetailPage y recargar datos cuando se regrese
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailPage(
+              user: user,
+              imagePath: imageUrls.isNotEmpty ? imageUrls[0] : '',
+              imagePaths: imageUrls.isNotEmpty ? imageUrls : null,
+              title: productName,
+              points: productPoints,
+              description: productDescription,
+              category: productCategory,
+              availablePoints: availablePoints,
+              productId: productId,
+            ),
+          ),
+        );
+
+        // Recargar datos cuando se regrese de ProductDetailPage
+        // Esto asegura que se muestren los nuevos canjes
+        if (mounted) {
+          await _refreshData();
+          // También actualizar los puntos del provider
+          try {
+            await context.read<PointsProvider>().refresh();
+          } catch (e) {
+            // Error al actualizar puntos, continuar
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al abrir el producto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

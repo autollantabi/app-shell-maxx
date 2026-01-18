@@ -102,10 +102,12 @@ class PointsApi {
     required String productId,
     int? addressId,
     String comments = '',
+    int quantity = 1,
   }) async {
     final body = <String, dynamic>{
       'productId': productId,
       'comments': comments,
+      'quantity': quantity,
     };
     
     // Solo agregar addressId si no es null (para vendedores será null)

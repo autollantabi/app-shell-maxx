@@ -41,6 +41,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _showSuccessScreen = false;
   Map<String, dynamic>? _selectedAddress;
   bool _isRedeeming = false;
+  int _quantity = 1;
 
   @override
   void initState() {
@@ -90,7 +91,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         title: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Image.asset(
-            'assets/images/brand/logo-2.png',
+            'assets/images/brand/1-LOGO-CLUB-SHELL-MAXX2.jpeg',
             height: 18,
             fit: BoxFit.contain,
             alignment: Alignment.centerLeft,
@@ -283,7 +284,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    widget.points.toString(),
+                                    _quantity > 1
+                                        ? '${widget.points} × $_quantity = ${widget.points * _quantity} pts'
+                                        : widget.points.toString(),
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontFamily: 'ShellBold',
@@ -293,9 +296,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ],
                               ),
                               // Mensaje de puntos faltantes a la derecha
-                              if (widget.points > widget.availablePoints)
+                              if ((widget.points * _quantity) > widget.availablePoints)
                                 Text(
-                                  'Te faltan ${widget.points - widget.availablePoints} puntos',
+                                  'Te faltan ${(widget.points * _quantity) - widget.availablePoints} puntos',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontFamily: 'ShellBook',
@@ -305,50 +308,126 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Botón canjear
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed:
-                                  (_isRedeeming ||
-                                      widget.points > widget.availablePoints)
-                                  ? null
-                                  : () {
-                                      _navigateToSuccessPage(context);
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.secondary,
-                                foregroundColor: Colors.black,
-                                disabledBackgroundColor: AppColors.secondary
-                                    .withValues(alpha: 0.6),
-                                disabledForegroundColor: Colors.black54,
-                                shape: RoundedRectangleBorder(
+                          // Contador de cantidad y botón canjear
+                          Row(
+                            children: [
+                              // Contador de cantidad
+                              Container(
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
                                   borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                    width: 1,
+                                  ),
                                 ),
-                                elevation: 0,
-                              ),
-                              child: _isRedeeming
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Botón restar
+                                    IconButton(
+                                      icon: const Icon(Icons.remove),
+                                      onPressed: _quantity > 1
+                                          ? () {
+                                              setState(() {
+                                                _quantity--;
+                                              });
+                                            }
+                                          : null,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 40,
+                                        minHeight: 40,
                                       ),
-                                    )
-                                  : const Text(
-                                      'Canjear',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontFamily: 'ShellHeavy',
-                                        color: AppColors.textPrimary,
+                                      color: _quantity > 1
+                                          ? AppColors.textPrimary
+                                          : Colors.grey[400],
+                                    ),
+                                    // Cantidad
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      child: Text(
+                                        _quantity.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontFamily: 'ShellBold',
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
-                            ),
+                                    // Botón sumar
+                                    IconButton(
+                                      icon: const Icon(Icons.add),
+                                      onPressed: (widget.points * (_quantity + 1)) <= widget.availablePoints
+                                          ? () {
+                                              setState(() {
+                                                _quantity++;
+                                              });
+                                            }
+                                          : null,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 40,
+                                        minHeight: 40,
+                                      ),
+                                      color: (widget.points * (_quantity + 1)) <= widget.availablePoints
+                                          ? AppColors.textPrimary
+                                          : Colors.grey[400],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Botón canjear
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        (_isRedeeming ||
+                                            (widget.points * _quantity) > widget.availablePoints)
+                                        ? null
+                                        : () {
+                                            _navigateToSuccessPage(context);
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.secondary,
+                                      foregroundColor: Colors.black,
+                                      disabledBackgroundColor: AppColors.secondary
+                                          .withValues(alpha: 0.6),
+                                      disabledForegroundColor: Colors.black54,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isRedeeming
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.black,
+                                                  ),
+                                            ),
+                                          )
+                                        : Text(
+                                            'Canjear${_quantity > 1 ? ' ($_quantity)' : ''}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontFamily: 'ShellHeavy',
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -589,6 +668,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         productId: widget.productId!,
         addressId: addressId,
         comments: '',
+        quantity: _quantity,
       );
 
       if (mounted) {

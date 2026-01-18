@@ -222,7 +222,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
 
         // Si la actualización fue exitosa, asociar el influencer al manager
         if (apiResponse.success) {
-          final associateResponse = await UserApi.associateInfluencer(
+          await UserApi.associateInfluencer(
             influencerId: _influencerId!,
             notes: 'Reactivacion de usuario',
           );
@@ -428,6 +428,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                         labelText: 'Nombre',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          setState(() {});
+                        }
+                      },
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Ingresa el nombre';
@@ -446,6 +451,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                         labelText: 'Apellido',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          setState(() {});
+                        }
+                      },
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Ingresa el apellido';
@@ -464,6 +474,11 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                         labelText: 'N° de identificación',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          setState(() {});
+                        }
+                      },
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Ingresa la identificación';
@@ -510,6 +525,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.phone,
+                            onChanged: (_) {
+                              _formKey.currentState?.validate();
+                            },
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Requerido';
@@ -532,6 +550,9 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.phone,
+                            onChanged: (_) {
+                              _formKey.currentState?.validate();
+                            },
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Ingresa el número';
@@ -544,7 +565,13 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                     ),
                     const SizedBox(height: 16),
                     GestureDetector(
-                      onTap: _pickDate,
+                      onTap: () {
+                        _pickDate().then((_) {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            setState(() {});
+                          }
+                        });
+                      },
                       child: AbsorbPointer(
                         child: TextFormField(
                           controller: _dateController,

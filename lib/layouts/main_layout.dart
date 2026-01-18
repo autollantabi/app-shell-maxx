@@ -62,8 +62,8 @@ class _MainLayoutState extends State<MainLayout> {
         title: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Image.asset(
-            'assets/images/brand/logo-2.png',
-            height: 18,
+            'assets/images/brand/1-LOGO-CLUB-SHELL-MAXX2.jpeg',
+            height: 28,
             fit: BoxFit.contain,
             alignment: Alignment.centerLeft,
           ),
