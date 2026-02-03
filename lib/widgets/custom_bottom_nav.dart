@@ -80,12 +80,12 @@ class CustomBottomNav extends StatelessWidget {
               index: 2,
               inactiveIcon: Icon(
                 Icons.person_outlined,
-                size: 24,
+                size: 28,
                 color: AppColors.textSecondary,
               ),
               activeIcon: Icon(
                 Icons.person,
-                size: 24,
+                size: 28,
                 color: AppColors.secondary,
               ),
             ),

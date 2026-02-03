@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
 import '../../api/user_api.dart';
-import 'add_influencer_page.dart';
 
 class AssociatedProfile {
   final int id;
@@ -15,7 +14,7 @@ class AssociatedProfile {
   final String apellido;
   final String email;
   final int? roleId;
-
+  final String? sapCode;
   AssociatedProfile({
     required this.id,
     required this.managerId,
@@ -26,6 +25,7 @@ class AssociatedProfile {
     required this.apellido,
     required this.email,
     this.roleId,
+    this.sapCode,
   });
 
   factory AssociatedProfile.fromApiData(Map<String, dynamic> json) {
@@ -43,6 +43,7 @@ class AssociatedProfile {
       apellido: influencer['LASTNAME'] ?? influencer['lastName'] ?? '',
       email: influencer['EMAIL'] ?? influencer['email'] ?? '',
       roleId: influencer['ROLE_ID'] ?? influencer['roleId'],
+      sapCode: influencer['SAP_CODE'] ?? influencer['sapCode'],
     );
   }
 
@@ -77,7 +78,6 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
 
     try {
       final apiResponse = await UserApi.getMyInfluencers();
-
 
       if (apiResponse.success && mounted) {
         List<AssociatedProfile> profiles = [];
@@ -115,8 +115,7 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
             } else if (body is String) {
               try {
                 actualData = jsonDecode(body) as Map<String, dynamic>?;
-              } catch (e) {
-              }
+              } catch (e) {}
             }
           }
 
@@ -158,11 +157,11 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Perfiles asociados',
+          'Ver influenciadores',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,
@@ -172,56 +171,18 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-      body: Column(
-        children: [
-          // Botón "Asociar influenciador"
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton.icon(
-                onPressed: () => _showAddProfileSheet(context),
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [const Icon(Icons.person_add, size: 20)],
-                ),
-                label: const Text(
-                  'Asociar influenciador',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'ShellHeavy',
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  foregroundColor: AppColors.textPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  elevation: 0,
-                ),
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _profiles.isEmpty
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _profiles.length,
+              itemBuilder: (context, index) {
+                final profile = _profiles[index];
+                return _buildProfileListItem(profile, index);
+              },
             ),
-          ),
-          // Lista o estado vacío
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _profiles.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _profiles.length,
-                    itemBuilder: (context, index) {
-                      final profile = _profiles[index];
-                      return _buildProfileListItem(profile, index);
-                    },
-                  ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -233,7 +194,7 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Todavía no tienes perfiles asociados',
+              'Todavía no tienes asociados influenciadores',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -250,11 +211,13 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         : Colors.green.withValues(alpha: 0.2);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16, right: 16, left: 16, top: 16),
       child: Row(
         children: [
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '${profile.nombre} ${profile.apellido}',
@@ -264,150 +227,37 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    profile.estado,
+                if (profile.sapCode != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'ID ${profile.sapCode}',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'ShellMedium',
-                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'ShellBook',
+                      color: Colors.grey[600],
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            color: AppColors.secondary,
-            onPressed: () => _showDeleteConfirmation(context, profile, index),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddProfileSheet(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddInfluencerPage(
-          onSave: (profile) {
-            // Recargar perfiles después de agregar uno nuevo
-            _loadProfiles();
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation(
-    BuildContext context,
-    AssociatedProfile profile,
-    int index,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Confirmar eliminación',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas eliminar a ${profile.nombre} ${profile.apellido}?',
-          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancelar',
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              profile.estado,
               style: TextStyle(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                fontFamily: 'ShellMedium',
+                color: AppColors.textPrimary,
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteProfile(profile, index);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _deleteProfile(AssociatedProfile profile, int index) async {
-    try {
-      final apiResponse = await UserApi.deleteInfluencerAssociation(
-        associationId: profile.id,
-      );
-
-
-      if (mounted) {
-        if (apiResponse.success) {
-          // Eliminar de la lista solo si la eliminación fue exitosa
-          setState(() {
-            _profiles.removeAt(index);
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${profile.nombre} ${profile.apellido} eliminado correctamente',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                apiResponse.message.isNotEmpty
-                    ? apiResponse.message
-                    : 'Error al eliminar la asociación',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error de conexión: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

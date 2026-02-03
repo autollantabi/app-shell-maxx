@@ -1,41 +1,49 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/api_response.dart';
 
 /// Configuración centralizada de la API
 class ApiConfig {
+  // Cliente HTTP personalizado para mejor manejo de DNS en iOS
+  static http.Client? _httpClient;
+  
   // URL base manual (si se establece, se usa en lugar de la detección automática)
   static String? _manualBaseUrl;
   
+  /// Obtiene el cliente HTTP configurado
+  static http.Client get httpClient {
+    if (_httpClient == null) {
+      if (Platform.isIOS || Platform.isAndroid) {
+        final ioClient = HttpClient()
+          ..autoUncompress = true
+          ..connectionTimeout = Duration(seconds: 15)
+          ..idleTimeout = Duration(seconds: 15);
+        _httpClient = IOClient(ioClient);
+      } else {
+        _httpClient = http.Client();
+      }
+    }
+    return _httpClient!;
+  }
+  
   
   // URL base de la API - Se configura automáticamente según el modo de ejecución
-  // En modo debug (flutter run): usa la URL de desarrollo con /dev
-  // En modo release (flutter build): usa el dominio público para producción
-  // Se puede sobrescribir usando setBaseUrl()
+  // Prioridad:
+  // 1. URL manual (setBaseUrl)
+  // 2. Modo debug (debug -> /dev, release -> sin /dev)
   static String get baseUrl {
     if (_manualBaseUrl != null) {
-      if (kDebugMode) {
-        print('🔧 Usando URL manual: $_manualBaseUrl');
-      }
       return _manualBaseUrl!;
     }
     
-    final url = kDebugMode
+    return kDebugMode
         ? 'https://api.maxximundo.com/api/app-shell/dev'
         : 'https://api.maxximundo.com/api/app-shell';
-    
-    // Logging inicial en modo debug
-    if (kDebugMode) {
-      print('🔗 URL base configurada: $url');
-      print('📱 Modo: ${kDebugMode ? "DEBUG" : "RELEASE"}');
-    }
-    
-    return url;
   }
   
   /// Establece manualmente la URL base (útil para forzar el uso de la URL pública en debug)
@@ -80,7 +88,6 @@ class ApiConfig {
 
   /// Construye la URL completa del endpoint
   static String buildUrl(String endpoint) {
-    // Asegurar que el endpoint comience con /
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     return '$baseUrl$cleanEndpoint';
   }
@@ -93,12 +100,11 @@ class ApiConfig {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      // User-Agent similar a navegadores para evitar bloqueos de firewall
-      // Algunos firewalls empresariales bloquean User-Agents no reconocidos
       'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+      'Connection': 'keep-alive',
     };
 
-    // Agregar idSession de autenticación si es necesario
     if (includeAuth) {
       final idSession = await getIdSession();
       if (idSession != null) {
@@ -106,7 +112,6 @@ class ApiConfig {
       }
     }
 
-    // Agregar headers adicionales si se proporcionan
     if (additionalHeaders != null) {
       headers.addAll(additionalHeaders);
     }
@@ -134,34 +139,17 @@ class ApiConfig {
       additionalHeaders: additionalHeaders,
     );
 
-    // Logging en modo debug
-    if (kDebugMode) {
-      print('🌐 GET: $url');
-      print('📋 Headers: $headers');
-    }
-
     try {
-      final response = await http
+      final response = await httpClient
           .get(Uri.parse(url), headers: headers)
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
-        if (response.statusCode >= 400) {
-          print('❌ Response body: ${response.body}');
-        }
+      if (response.statusCode >= 400) {
+        debugPrint('❌ GET $url - Status: ${response.statusCode}');
       }
-      
       return response;
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en GET $url: $e');
-        if (e is SocketException) {
-          print('🔧 Tipo: SocketException');
-          print('🔧 Mensaje: ${e.message}');
-          print('🔧 OS Error: ${e.osError}');
-        }
-      }
+      debugPrint('❌ Error en GET $url: $e');
       rethrow;
     }
   }
@@ -181,17 +169,8 @@ class ApiConfig {
     
     final bodyJson = body != null ? jsonEncode(body) : null;
 
-    // Logging en modo debug
-    if (kDebugMode) {
-      print('🌐 POST: $url');
-      print('📋 Headers: $headers');
-      if (bodyJson != null) {
-        print('📦 Body: $bodyJson');
-      }
-    }
-
     try {
-      final response = await http
+      final response = await httpClient
           .post(
             Uri.parse(url),
             headers: headers,
@@ -199,18 +178,12 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
-        if (response.statusCode >= 400) {
-          print('❌ Response body: ${response.body}');
-        }
+      if (response.statusCode >= 400) {
+        debugPrint('❌ POST $url - Status: ${response.statusCode}');
       }
-      
       return response;
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en POST $url: $e');
-      }
+      debugPrint('❌ Error en POST $url: $e');
       rethrow;
     }
   }
@@ -228,13 +201,8 @@ class ApiConfig {
       additionalHeaders: additionalHeaders,
     );
 
-    if (kDebugMode) {
-      print('🌐 PUT: $url');
-      print('📋 Headers: $headers');
-    }
-
     try {
-      final response = await http
+      final response = await httpClient
           .put(
             Uri.parse(url),
             headers: headers,
@@ -242,15 +210,13 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
+      if (response.statusCode >= 400) {
+        debugPrint('❌ PUT $url - Status: ${response.statusCode}');
       }
       
       return response;
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en PUT $url: $e');
-      }
+      debugPrint('❌ Error en PUT $url: $e');
       rethrow;
     }
   }
@@ -268,13 +234,8 @@ class ApiConfig {
       additionalHeaders: additionalHeaders,
     );
 
-    if (kDebugMode) {
-      print('🌐 PATCH: $url');
-      print('📋 Headers: $headers');
-    }
-
     try {
-      final response = await http
+      final response = await httpClient
           .patch(
             Uri.parse(url),
             headers: headers,
@@ -282,15 +243,13 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
+      if (response.statusCode >= 400) {
+        debugPrint('❌ PATCH $url - Status: ${response.statusCode}');
       }
       
       return response;
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en PATCH $url: $e');
-      }
+      debugPrint('❌ Error en PATCH $url: $e');
       rethrow;
     }
   }
@@ -307,25 +266,18 @@ class ApiConfig {
       additionalHeaders: additionalHeaders,
     );
 
-    if (kDebugMode) {
-      print('🌐 DELETE: $url');
-      print('📋 Headers: $headers');
-    }
-
     try {
-      final response = await http
+      final response = await httpClient
           .delete(Uri.parse(url), headers: headers)
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
+      if (response.statusCode >= 400) {
+        debugPrint('❌ DELETE $url - Status: ${response.statusCode}');
       }
       
       return response;
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en DELETE $url: $e');
-      }
+      debugPrint('❌ Error en DELETE $url: $e');
       rethrow;
     }
   }
@@ -352,61 +304,27 @@ class ApiConfig {
   }
 
   /// Maneja errores de conexión y retorna un mensaje descriptivo
-  /// Público para que pueda ser usado en otros lugares si es necesario
   static String handleConnectionError(dynamic error) {
-    final baseUrlUsed = baseUrl;
-    
-    // Logging detallado en modo debug
-    if (kDebugMode) {
-      print('❌ Error de conexión: $error');
-      print('📍 URL base: $baseUrlUsed');
-      print('🔍 Tipo de error: ${error.runtimeType}');
-    }
-    
     if (error is SocketException) {
       final message = error.message.toLowerCase();
       if (message.contains('failed host lookup') ||
-          message.contains('name or service not known') ||
-          message.contains('nodename nor servname provided')) {
-        return kDebugMode 
-          ? 'No se puede resolver el servidor: ${Uri.parse(baseUrlUsed).host}\nURL: $baseUrlUsed'
-          : 'No se puede conectar al servidor. Verifica tu conexión a internet.';
+          message.contains('name or service not known')) {
+        return 'No se puede conectar al servidor. Verifica tu conexión a internet.';
       } else if (message.contains('connection refused')) {
-        return kDebugMode
-          ? 'Conexión rechazada por el servidor.\nURL: $baseUrlUsed'
-          : 'El servidor rechazó la conexión.';
+        return 'El servidor rechazó la conexión.';
       } else if (message.contains('connection timed out')) {
         return 'Tiempo de espera agotado. Verifica tu conexión a internet.';
       } else if (message.contains('network is unreachable')) {
         return 'Red no disponible. Verifica tu conexión a internet.';
       }
-      return kDebugMode
-        ? 'Error de conexión: ${error.message}\nURL: $baseUrlUsed'
-        : 'Error de conexión: ${error.message}';
-    } 
-    
-    if (error is http.ClientException) {
-      final message = error.message.toLowerCase();
-      if (message.contains('failed host lookup') ||
-          message.contains('socket') ||
-          message.contains('nodename')) {
-        return kDebugMode
-          ? 'No se puede resolver el servidor: ${Uri.parse(baseUrlUsed).host}\nURL: $baseUrlUsed'
-          : 'No se puede conectar al servidor. Verifica tu conexión.';
-      }
-      return kDebugMode
-        ? 'Error de cliente HTTP: ${error.message}\nURL: $baseUrlUsed'
-        : 'Error de conexión: ${error.message}';
+      return 'Error de conexión: ${error.message}';
     }
     
-    if (error is TimeoutException || error.toString().toLowerCase().contains('timeout')) {
-      return 'Tiempo de espera agotado (${timeoutSeconds}s).';
+    if (error is TimeoutException) {
+      return 'Tiempo de espera agotado.';
     }
     
-    // Error genérico
-    return kDebugMode
-      ? 'Error: $error\nURL: $baseUrlUsed'
-      : 'Error de conexión. Por favor, intenta nuevamente.';
+    return 'Error de conexión. Por favor, intenta nuevamente.';
   }
 
   /// Parsea una respuesta HTTP a ApiResponse estándar
@@ -609,11 +527,6 @@ class ApiConfig {
     try {
       final url = buildUrl(endpoint);
 
-      if (kDebugMode) {
-        print('🌐 PATCH Multipart: $url');
-        print('📋 Fields: $fields');
-        print('📁 Files: ${files?.keys.toList()}');
-      }
 
       // Crear request multipart
       final request = http.MultipartRequest('PATCH', Uri.parse(url));
@@ -654,27 +567,21 @@ class ApiConfig {
       headers.remove('Content-Type');
       request.headers.addAll(headers);
 
-      if (kDebugMode) {
-        print('📋 Headers: ${request.headers}');
-      }
-
-      // Enviar request
-      final streamedResponse = await request.send().timeout(
+      // Enviar request usando el cliente HTTP personalizado
+      final streamedResponse = await httpClient.send(request).timeout(
         Duration(seconds: timeoutSeconds),
       );
 
       // Convertir streamed response a response normal
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (kDebugMode) {
-        print('✅ Response status: ${response.statusCode}');
+      if (response.statusCode >= 400) {
+        debugPrint('❌ PATCH Multipart $url - Status: ${response.statusCode}');
       }
 
       return parseResponse<T>(response, dataParser: dataParser);
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error en PATCH Multipart: $e');
-      }
+      debugPrint('❌ Error en PATCH Multipart: $e');
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
       );

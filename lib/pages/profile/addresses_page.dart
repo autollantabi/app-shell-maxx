@@ -102,7 +102,6 @@ class _AddressesPageState extends State<AddressesPage> {
         });
 
       }
-    } catch (e) {
     } finally {
       if (mounted) {
         setState(() {
@@ -171,7 +170,7 @@ class _AddressesPageState extends State<AddressesPage> {
                   street,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontFamily: 'ShellBold',
+                    fontFamily: 'ShellHeavy',
                     color: Colors.black87,
                     height: 1.4,
                   ),
@@ -318,7 +317,7 @@ class _AddressesPageState extends State<AddressesPage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,

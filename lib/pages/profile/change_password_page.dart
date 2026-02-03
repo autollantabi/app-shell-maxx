@@ -44,7 +44,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,

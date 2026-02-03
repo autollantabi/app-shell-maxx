@@ -9,6 +9,7 @@ import '../../api/gifts_api.dart';
 import '../../contexts/points_provider.dart';
 import '../../models/user_model.dart';
 import '../../pages/gifts/product_detail_page.dart';
+import '../../utils/failed_image_cache.dart';
 
 class RedeemedPrize {
   final String id;
@@ -322,7 +323,7 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,
@@ -414,25 +415,28 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: prize.imageUrl.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      prize.imageUrl,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholderImage();
-                      },
-                    ),
-                  )
+                ? (FailedImageCache.isFailed(prize.imageUrl)
+                    ? _buildPlaceholderImage()
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          prize.imageUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            FailedImageCache.addFailed(prize.imageUrl);
+                            return _buildPlaceholderImage();
+                          },
+                        ),
+                      ))
                 : _buildPlaceholderImage(),
           ),
           const SizedBox(width: 16),
@@ -473,7 +477,7 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                       prize.pointsRedeemed.toString(),
                       style: const TextStyle(
                         fontSize: 12,
-                        fontFamily: 'ShellBold',
+                        fontFamily: 'ShellHeavy',
                         color: AppColors.textPrimary,
                       ),
                     ),

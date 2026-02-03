@@ -9,7 +9,14 @@ import 'associated_profiles_page.dart';
 class AddInfluencerPage extends StatefulWidget {
   final Function(AssociatedProfile) onSave;
 
-  const AddInfluencerPage({super.key, required this.onSave});
+  /// ID del manager al que se asocia el influenciador (obligatorio; solo el vendedor usa este flujo).
+  final String managerId;
+
+  const AddInfluencerPage({
+    super.key,
+    required this.onSave,
+    required this.managerId,
+  });
 
   @override
   State<AddInfluencerPage> createState() => _AddInfluencerPageState();
@@ -63,19 +70,35 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
           _isValidatingEmail = false;
         });
 
+        // Comprobar si el influenciador ya está asociado (IS_ASSOCIATED en data o rawData)
+        final data = apiResponse.data ?? apiResponse.rawData;
+        final isAssociatedRaw = data?['IS_ASSOCIATED'] ?? data?['is_associated'];
+        final isAssociated = isAssociatedRaw == true || isAssociatedRaw == 'true';
+        if (isAssociated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Ese influenciador ya está asociado. Prueba con otro correo.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+
         if (apiResponse.success && apiResponse.data != null) {
           // Si se encontró el influencer, llenar los campos
-          final data = apiResponse.data as Map<String, dynamic>;
-          _influencerId = data['ID'] as String?;
+          final responseData = apiResponse.data as Map<String, dynamic>;
+          _influencerId = responseData['ID'] as String?;
 
           // Llenar los campos del formulario
-          _nameController.text = data['NAME'] as String? ?? '';
-          _lastNameController.text = data['LASTNAME'] as String? ?? '';
-          _idController.text = data['CARD_ID'] as String? ?? '';
-          _emailController.text = data['EMAIL'] as String? ?? email;
+          _nameController.text = responseData['NAME'] as String? ?? '';
+          _lastNameController.text = responseData['LASTNAME'] as String? ?? '';
+          _idController.text = responseData['CARD_ID'] as String? ?? '';
+          _emailController.text = responseData['EMAIL'] as String? ?? email;
 
           // Procesar teléfono (separar prefijo y número)
-          final phone = data['PHONE'] as String? ?? '';
+          final phone = responseData['PHONE'] as String? ?? '';
           if (phone.isNotEmpty) {
             if (phone.startsWith('+593')) {
               _prefixController.text = '+593';
@@ -96,7 +119,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
           }
 
           // Procesar fecha de nacimiento
-          final birthDateStr = data['BIRTH_DATE'] as String?;
+          final birthDateStr = responseData['BIRTH_DATE'] as String?;
           if (birthDateStr != null && birthDateStr.isNotEmpty) {
             try {
               final birthDate = DateTime.parse(birthDateStr);
@@ -224,6 +247,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         if (apiResponse.success) {
           await UserApi.associateInfluencer(
             influencerId: _influencerId!,
+            managerId: widget.managerId,
             notes: 'Reactivacion de usuario',
           );
         }
@@ -325,7 +349,7 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
                       labelText: 'Dirección de correo',
                       border: OutlineInputBorder(),
                       hintText: 'ejemplo@correo.com',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         fontFamily: 'ShellBook',
                       ),
                     ),

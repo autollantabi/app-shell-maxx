@@ -160,9 +160,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
         userId: _currentUser.id,
       );
 
-
-      if (!apiResponse.success) {
-      }
+      if (!apiResponse.success) {}
     } catch (e) {
       // No mostramos error al usuario, solo lo registramos
     }
@@ -171,7 +169,6 @@ class _ClubShellHomeState extends State<ClubShellHome> {
   Future<void> _loadUserData() async {
     try {
       final apiResponse = await AuthApi.getCurrentUser();
-
 
       if (apiResponse.success && mounted) {
         // Obtener datos del usuario directamente de la respuesta
@@ -194,11 +191,9 @@ class _ClubShellHomeState extends State<ClubShellHome> {
 
         // Si no está en data, intentar desde rawData['data']
         if (userData == null && apiResponse.rawData != null) {
-
           if (apiResponse.rawData!.containsKey('data')) {
             final data = apiResponse.rawData!['data'];
             if (data is Map<String, dynamic>) {
-
               // Verificar si tiene los campos del usuario directamente
               if (data.containsKey('ID') || data.containsKey('id')) {
                 userData = data;
@@ -232,10 +227,8 @@ class _ClubShellHomeState extends State<ClubShellHome> {
           if (widget.onUserUpdated != null) {
             widget.onUserUpdated!(updatedUser);
           }
-        } else {
-        }
-      } else {
-      }
+        } else {}
+      } else {}
     } catch (e) {
       // Error al cargar datos del usuario, continuar con el usuario actual
     }
@@ -293,7 +286,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                   '${_currentUser.name}!',
                   style: const TextStyle(
                     fontSize: 18,
-                    fontFamily: 'ShellBold',
+                    fontFamily: 'ShellHeavy',
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -329,7 +322,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                                 'Puntos disponibles',
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  fontFamily: 'ShellBold',
+                                  fontFamily: 'ShellHeavy',
                                 ),
                               ),
                             ],
@@ -381,7 +374,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                                               .toString(),
                                           style: TextStyle(
                                             fontSize: 20,
-                                            fontFamily: 'ShellBold',
+                                            fontFamily: 'ShellHeavy',
                                             height: 1.0,
                                           ),
                                         );
@@ -396,10 +389,13 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                       ],
                     ),
                   ),
-                  // Segunda fila: Puntos acumulados
+                  // Segunda fila: Puntos generados y Puntos extra (dos columnas)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.vertical(
@@ -407,7 +403,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -415,31 +411,71 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                     ),
                     child: Consumer<PointsProvider>(
                       builder: (context, pointsProvider, child) {
-                        final totalPoints = pointsProvider.isLoading
+                        final puntosGenerados = pointsProvider.isLoading
                             ? 0
-                            : pointsProvider.totalPoints;
+                            : pointsProvider.availableWithoutExtras;
+                        final puntosExtra = pointsProvider.isLoading
+                            ? 0
+                            : pointsProvider.extraPoints;
 
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Puntos acumulados:',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'ShellTHAI',
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Text(
-                                totalPoints.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'ShellTHAI',
+                        return IntrinsicHeight(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Puntos generados',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'ShellBook',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      puntosGenerados.toString(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontFamily: 'ShellTHAI',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                              Container(
+                                width: 1,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                color: Colors.grey[300],
+                              ),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Puntos extra',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'ShellBook',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      puntosExtra.toString(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontFamily: 'ShellTHAI',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -464,7 +500,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
 
             // Scroll horizontal de premios
             _HomeProductsList(user: _currentUser),
-            const SizedBox(height: 32),
+            const SizedBox(height: 10),
 
             // Carrusel de banners promocionales
             _buildBannerCarousel(),
@@ -477,54 +513,14 @@ class _ClubShellHomeState extends State<ClubShellHome> {
   List<Map<String, dynamic>> _getBannerItems() {
     return [
       {
-        'image': 'assets/images/app/ferrari-banner-1.jpg',
-        'title': 'Nueva colección',
-        'subtitle': 'Autitos Ferrari',
-        'description': 'para llevar tu colección a lo más alto del podio.',
-        'badge': 'Ferrari Innovation Partner',
-        'action': () => _navigateToFerrariPage(),
+        'image': 'assets/images/carrousel/gorraFerrari.png',
+        'action': () {}, // Sin acción por ahora
       },
       {
-        'image': 'assets/images/app/shell-promo-1.jpg',
-        'title': 'Promoción Especial',
-        'subtitle': 'Shell V-Power',
-        'description': 'Combustible premium para el máximo rendimiento.',
-        'badge': 'Shell V-Power',
-        'action': () => _navigateToShellPromoPage(),
-      },
-      {
-        'image': 'assets/images/app/racing-banner-1.jpg',
-        'title': 'Carreras Shell',
-        'subtitle': 'Temporada 2024',
-        'description': 'Sé parte de la experiencia Shell Racing.',
-        'badge': 'Racing 2024',
-        'action': () => _navigateToRacingPage(),
-      },
-      {
-        'image': 'assets/images/app/loyalty-banner-1.jpg',
-        'title': 'Programa Lealtad',
-        'subtitle': 'Club Shell Premium',
-        'description': 'Beneficios exclusivos para miembros premium.',
-        'badge': 'Premium Member',
-        'action': () => _navigateToLoyaltyPage(),
+        'image': 'assets/images/carrousel/mobiliarioShell.png',
+        'action': () {}, // Sin acción por ahora
       },
     ];
-  }
-
-  void _navigateToFerrariPage() {
-    // Aquí puedes navegar a una página específica de Ferrari
-  }
-
-  void _navigateToShellPromoPage() {
-    // Aquí puedes navegar a una página de promociones Shell
-  }
-
-  void _navigateToRacingPage() {
-    // Aquí puedes navegar a una página de carreras
-  }
-
-  void _navigateToLoyaltyPage() {
-    // Aquí puedes navegar a una página de lealtad
   }
 
   Widget _buildBannerCarousel() {
@@ -532,9 +528,9 @@ class _ClubShellHomeState extends State<ClubShellHome> {
 
     return Column(
       children: [
-        // Carrusel de banners
-        SizedBox(
-          height: 160,
+        // Carrusel de banners (proporción 1536x1024 para imagen completa sin recorte)
+        AspectRatio(
+          aspectRatio: 1536 / 1000,
           child: PageView.builder(
             controller: _bannerController,
             onPageChanged: (index) {
@@ -545,107 +541,28 @@ class _ClubShellHomeState extends State<ClubShellHome> {
             itemCount: bannerItems.length,
             itemBuilder: (context, index) {
               final item = bannerItems[index];
+              final action = item['action'] as VoidCallback?;
               return GestureDetector(
-                onTap: item['action'],
+                onTap: action,
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: AssetImage(item['image']),
-                      fit: BoxFit.cover,
-                      onError: (exception, stackTrace) {
-                        // Si la imagen no existe, usar color de fondo
-                      },
-                    ),
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.black.withValues(alpha: 0.7),
-                        ],
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Logo Shell
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          child: Image.asset(
-                            'assets/images/brand/logo-shell.png',
-                            width: 40,
-                            height: 40,
-                          ),
-                        ),
-                        // Badge
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              item['badge'],
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Texto principal
-                        Positioned(
-                          left: 16,
-                          top: 60,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['title'],
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                item['subtitle'],
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.secondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Texto descriptivo
-                        Positioned(
-                          left: 16,
-                          bottom: 20,
-                          child: Text(
-                            item['description'],
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    item['image'] as String,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.image,
+                        size: 48,
+                        color: Colors.grey,
+                      );
+                    },
                   ),
                 ),
               );

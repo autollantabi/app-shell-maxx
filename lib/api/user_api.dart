@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import '../api.dart';
 import '../models/api_response.dart';
 
@@ -61,10 +62,12 @@ class UserApi {
   static Future<ApiResponse<Map<String, dynamic>>> searchInfluencer({
     required String email,
   }) async {
-    return await ApiConfig.postResponse<Map<String, dynamic>>(
+    final response = await ApiConfig.postResponse<Map<String, dynamic>>(
       '/usuarios/search-influencer',
       body: {'email': email},
     );
+    debugPrint('searchInfluencer response: success=${response.success}, message=${response.message}, data=${response.data}, rawData=${response.rawData}');
+    return response;
   }
 
   /// Actualizar un influencer
@@ -78,14 +81,19 @@ class UserApi {
     );
   }
 
-  /// Asociar un influencer al manager actual
+  /// Asociar un influencer a un manager. Solo lo usa el vendedor; managerId es obligatorio.
   static Future<ApiResponse<Map<String, dynamic>>> associateInfluencer({
     required String influencerId,
+    required String managerId,
     String notes = 'Reactivacion de usuario',
   }) async {
     return await ApiConfig.postResponse<Map<String, dynamic>>(
       '/manager-influencers',
-      body: {'influencerId': influencerId, 'notes': notes},
+      body: {
+        'influencerId': influencerId,
+        'managerId': managerId,
+        'notes': notes,
+      },
     );
   }
 
@@ -96,6 +104,56 @@ class UserApi {
     return await ApiConfig.deleteResponse<Map<String, dynamic>>(
       '/manager-influencers/$associationId',
     );
+  }
+
+  /// Obtener influencers asociados a un manager (por ID de manager)
+  /// Para que un vendedor vea los influencers de un manager seleccionado.
+  static Future<ApiResponse<dynamic>> getInfluencersByManagerId({
+    required String managerId,
+  }) async {
+    return await ApiConfig.getResponse<dynamic>(
+      '/manager-influencers/manager/$managerId/influencers',
+    );
+  }
+
+  /// Obtener managers asociados a un vendedor
+  /// GET /manager-vendedor/vendedor/{vendedorId}/managers
+  static Future<ApiResponse<Map<String, dynamic>>> getVendedorManagers({
+    required String vendedorId,
+  }) async {
+    final endpoint = '/manager-vendedor/vendedor/$vendedorId/managers';
+    
+    final apiResponse = await ApiConfig.getResponse<Map<String, dynamic>>(
+      endpoint,
+    );
+    debugPrint('apiResponse: ${apiResponse.rawData}');
+    
+    // Extraer datos de rawData si data es null
+    Map<String, dynamic>? extractedData;
+    if (apiResponse.rawData != null) {
+      try {
+        final rawDataMap = apiResponse.rawData as Map<String, dynamic>;
+        
+        // Intentar obtener 'data' del rawData
+        if (rawDataMap.containsKey('data') && rawDataMap['data'] is Map) {
+          extractedData = rawDataMap['data'] as Map<String, dynamic>;
+        }
+      } catch (e) {
+        debugPrint('   ❌ Error al procesar rawData: $e');
+      }
+    }
+    
+    // Si data es null pero tenemos extractedData, crear nuevo ApiResponse
+    if (apiResponse.data == null && extractedData != null) {
+      return ApiResponse<Map<String, dynamic>>(
+        success: apiResponse.success,
+        message: apiResponse.message,
+        data: extractedData,
+        rawData: apiResponse.rawData,
+      );
+    }
+    
+    return apiResponse;
   }
 
   /// Actualizar usuario con imagen de perfil (multipart form data)

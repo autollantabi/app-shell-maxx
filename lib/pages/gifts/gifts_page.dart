@@ -281,17 +281,10 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Puntos disponibles',
+                            'Total de puntos',
                             style: const TextStyle(
                               fontSize: 16,
-                              fontFamily: 'ShellBold',
-                            ),
-                          ),
-                          Text(
-                            'Puntos acumulados',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontFamily: 'ShellBook',
+                              fontFamily: 'ShellHeavy',
                             ),
                           ),
                         ],
@@ -345,19 +338,11 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                                           pointsProvider.availablePoints.toString(),
                                           style: TextStyle(
                                             fontSize: 20,
-                                            fontFamily: 'ShellBold',
+                                            fontFamily: 'ShellHeavy',
                                             height: 1.0,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          pointsProvider.totalPoints.toString(),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontFamily: 'ShellBook',
-                                            height: 1.0,
-                                          ),
-                                        ),
+                                        
                                       ],
                                     );
                                   },

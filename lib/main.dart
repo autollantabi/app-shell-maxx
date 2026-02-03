@@ -1,10 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-// import 'api.dart'; // Solo descomentar si necesitas sobrescribir la URL base
 import 'theme/app_theme.dart';
 import 'pages/intro/intro_page.dart';
 import 'layouts/main_layout.dart';
@@ -16,68 +13,15 @@ import 'contexts/points_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Verificar conectividad de red al iniciar (para solicitar permisos si es necesario)
-  await _checkNetworkConnectivity();
-  
-  // Configuración de la API
-  // Por defecto:
-  // - Modo DEBUG: https://api.maxximundo.com/api/app-shell/dev (con /dev)
-  // - Modo RELEASE: https://api.maxximundo.com/api/app-shell (sin /dev)
-  // 
-  // Si necesitas sobrescribir, descomenta y modifica:
-  // import 'api.dart'; (arriba)
-  // ApiConfig.setBaseUrl('https://api.maxximundo.com/api/app-shell/dev'); // Con /dev
-  // ApiConfig.setBaseUrl('https://api.maxximundo.com/api/app-shell'); // Sin /dev
-  
-  // Bloquear la rotación de pantalla a modo vertical
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  
   runApp(const MyApp());
 }
 
-/// Verifica la conectividad de red al iniciar la app
-/// Esto solicita los permisos de red automáticamente en iOS/Android
-Future<void> _checkNetworkConnectivity() async {
-  try {
-    if (kDebugMode) {
-      print('🔍 Verificando conectividad con nuevo proveedor de internet...');
-      print('📍 Intentando resolver DNS para: api.maxximundo.com');
-    }
-    
-    // Intentar resolver el DNS del dominio de la API
-    // Esto activa los permisos de red automáticamente
-    final result = await InternetAddress.lookup('api.maxximundo.com')
-        .timeout(const Duration(seconds: 5));
-    
-    if (kDebugMode) {
-      if (result.isNotEmpty) {
-        print('✅ DNS resuelto correctamente');
-        for (var addr in result) {
-          print('   IP: ${addr.address} (IPv${addr.type.name})');
-        }
-        print('💡 Si sigue fallando, puede ser un problema del nuevo proveedor:');
-        print('   - Proxy transparente bloqueando peticiones Flutter');
-        print('   - Firewall del ISP bloqueando ciertos User-Agents');
-        print('   - DNS diferente que no resuelve correctamente');
-      } else {
-        print('⚠️ DNS no resolvió ninguna IP');
-        print('💡 El nuevo proveedor puede estar bloqueando la resolución DNS');
-      }
-    }
-  } catch (e) {
-    // Si falla, no es crítico - la app puede funcionar sin conexión inicial
-    if (kDebugMode) {
-      print('❌ Verificación de DNS falló: $e');
-      print('💡 Problema detectado con el nuevo proveedor de internet:');
-      print('   - DNS no resuelve: ${e.toString()}');
-      print('   - Safari/Postman funcionan pero Flutter no');
-      print('   - Posible causa: Proxy/Firewall del nuevo ISP bloqueando Flutter');
-      print('   - Solución: Contactar al nuevo proveedor o usar VPN/DNS alternativo');
-    }
-  }
-}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

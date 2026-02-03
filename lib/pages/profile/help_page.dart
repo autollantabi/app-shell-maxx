@@ -47,7 +47,7 @@ class _HelpPageState extends State<HelpPage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,

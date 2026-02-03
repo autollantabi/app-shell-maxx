@@ -136,6 +136,7 @@ flutter:
   assets:
     - assets/images/brand/
     - assets/images/app/
+    - assets/images/carrousel/
     - assets/images/products/
     - assets/images/icons/
     - assets/videos/animationShell.mp4

@@ -19,6 +19,7 @@ import 'change_password_page.dart';
 import 'addresses_page.dart';
 import 'help_page.dart';
 import 'redeemed_prizes_page.dart';
+import 'managers_page.dart';
 import '../onboarding/onboarding_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -230,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             _currentUser.name,
                             style: TextStyle(
                               fontSize: 16,
-                              fontFamily: 'ShellBold',
+                              fontFamily: 'ShellHeavy',
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -285,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                             .toString(),
                                         style: const TextStyle(
                                           fontSize: 20,
-                                          fontFamily: 'ShellBold',
+                                          fontFamily: 'ShellHeavy',
                                         ),
                                       );
                                     },
@@ -327,12 +328,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: 'Cambiar contraseña',
                   onTap: () => _handleChangePassword(context),
                 ),
-                // Solo mostrar "Perfiles asociados" si el usuario es Manager (ROLE_ID = 1)
+                // Solo mostrar "Ver Influenciadores" si el usuario es Manager (ROLE_ID = 1)
                 if (_currentUser.isManagerByRole)
                   _buildProfileOption(
                     icon: Icons.people_outline,
-                    title: 'Perfiles asociados',
+                    title: 'Ver influenciadores',
                     onTap: () => _handleAssociatedProfiles(context),
+                  ),
+                // Solo mostrar "Managers" si el usuario es Vendedor (ROLE_ID = 2)
+                if (_currentUser.isVendedorByRole)
+                  _buildProfileOption(
+                    icon: Icons.people_outline,
+                    title: 'Managers',
+                    onTap: () => _handleManagers(context),
                   ),
                 _buildProfileOption(
                   title: 'Premios canjeados',
@@ -346,7 +354,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 _buildProfileOption(
                   icon: Icons.school_outlined,
-                  title: 'Mostrar onboarding (pruebas)',
+                  title: 'Onboarding',
                   onTap: () => _handleShowOnboarding(context),
                 ),
                 const SizedBox(height: 30),
@@ -540,6 +548,15 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       MaterialPageRoute(
         builder: (context) => AssociatedProfilesPage(user: _currentUser),
+      ),
+    );
+  }
+
+  void _handleManagers(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ManagersPage(user: _currentUser),
       ),
     );
   }

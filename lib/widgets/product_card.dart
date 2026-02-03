@@ -6,6 +6,7 @@ import '../api.dart';
 import '../theme/app_colors.dart';
 import '../contexts/points_provider.dart';
 import '../pages/gifts/product_detail_page.dart';
+import '../utils/failed_image_cache.dart';
 
 /// Widget reutilizable para mostrar una card de producto
 class ProductCard extends StatelessWidget {
@@ -94,54 +95,62 @@ class ProductCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: primaryImageUrl != null && primaryImageUrl.isNotEmpty
-                        ? Image.network(
-                            primaryImageUrl,
-                            fit: BoxFit
-                                .scaleDown, // No estirar, mantener proporciones
-                            alignment: Alignment.center,
-                            // Sin cacheWidth/cacheHeight para mantener proporciones originales
-                            errorBuilder: (context, error, stackTrace) {
-                              final localImage = product.localImagePath;
-                              if (localImage != null) {
-                                return Image.asset(
-                                  localImage,
-                                  fit: BoxFit.scaleDown,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey[200],
-                                      child: const Icon(
-                                        Icons.image,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                              return Container(
+                        ? (FailedImageCache.isFailed(primaryImageUrl)
+                            ? Container(
                                 color: Colors.grey[200],
                                 child: const Icon(
                                   Icons.image,
                                   size: 50,
                                   color: Colors.grey,
                                 ),
-                              );
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              // Solo mostrar loader si realmente está cargando
-                              if (loadingProgress == null) return child;
-                              final progress =
-                                  loadingProgress.cumulativeBytesLoaded /
-                                  (loadingProgress.expectedTotalBytes ?? 1);
-                              if (progress >= 1.0) return child;
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            },
-                          )
+                              )
+                            : Image.network(
+                                primaryImageUrl,
+                                fit: BoxFit
+                                    .scaleDown, // No estirar, mantener proporciones
+                                alignment: Alignment.center,
+                                errorBuilder: (context, error, stackTrace) {
+                                  FailedImageCache.addFailed(primaryImageUrl);
+                                  final localImage = product.localImagePath;
+                                  if (localImage != null) {
+                                    return Image.asset(
+                                      localImage,
+                                      fit: BoxFit.scaleDown,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: const Icon(
+                                            Icons.image,
+                                            size: 50,
+                                            color: Colors.grey,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  final progress =
+                                      loadingProgress.cumulativeBytesLoaded /
+                                      (loadingProgress.expectedTotalBytes ?? 1);
+                                  if (progress >= 1.0) return child;
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                },
+                              ))
                         : product.localImagePath != null
                         ? Image.asset(
                             product.localImagePath!,
@@ -195,7 +204,7 @@ class ProductCard extends StatelessWidget {
                           product.points.toString(),
                           style: const TextStyle(
                             fontSize: 12,
-                            fontFamily: 'ShellBold',
+                            fontFamily: 'ShellHeavy',
                           ),
                         ),
                       ],

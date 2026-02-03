@@ -18,34 +18,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<Map<String, dynamic>> _onboardingPages = [
     {
-      'title': 'Tu camino al liderazgo\ncomienza aquí',
+      'title': 'Bienvenido a\nClub Shell Maxx',
       'description':
-          'Cada paso, cada logro en tu día a día, suma\npara llevarte más lejos.',
+          'El club de fidelización de Shell Lubricantes\ncreado para reconocer tu compromiso.',
       'image': 'assets/images/app/onboarding1.png',
     },
     {
-      'title': 'Liderar también se premia',
+      'title': 'Tu compromiso\nsuma puntos',
       'description':
-          'Tu dedicación se transforma en experiencias, reconocimientos y momentos que valen la pena.',
+          'Aquí, cada efuerzo te acerca al máximo de\npremios y recompensas.',
       'image': 'assets/images/app/onboarding2.png',
     },
-    // {
-    //   'title': 'Aquí nacen los líderes\nShell',
-    //   'description': 'Una comunidad que avanza, crece y lidera el\ncamino.',
-    //   'description1': '¿Estás listo para ser parte?',
-    //   'image': 'assets/images/app/onboarding3.png',
-    // },
     {
-      'title': 'Potencia que inspira',
+      'title': 'Tu pasión también suma',
       'description':
-          'La misma fuerza que impulsa a los campeones\ntambién impulsa tu camino.',
+          'Accede a experiencias y premios insipirados\nen el motorsport.',
       'description1': 'Con Shell, tu motor gana... y tú también.',
       'image': 'assets/images/app/onboarding4.png',
     },
     {
       'title': '19 años siendo #1 en\nlubricantes',
       'description':
-          'Ahora, tú eres parte de ese liderazgo: acumula\npuntos y desbloquea recompensas.',
+          'Formar parte de Club Shell Maxx es hacerlo\n con una marca líder a nivel global.',
       'image': 'assets/images/app/onboarding5.png',
     },
   ];
@@ -215,7 +209,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     page['title'] as String,
                     style: const TextStyle(
                       fontSize: 22,
-                      fontFamily: 'ShellBold',
+                      fontFamily: 'ShellHeavy',
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                       height: 1.2,
@@ -256,7 +250,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         text,
         style: const TextStyle(
           fontSize: 15,
-          fontFamily: 'ShellBold',
+          fontFamily: 'ShellHeavy',
           color: AppColors.textPrimary,
           height: 1.5,
         ),
@@ -279,7 +273,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             text: beforeText,
             style: const TextStyle(
               fontSize: 15,
-              fontFamily: 'ShellBold',
+              fontFamily: 'ShellHeavy',
               color: AppColors.textPrimary,
               height: 1.5,
             ),
@@ -288,7 +282,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             text: highlightTextActual,
             style: const TextStyle(
               fontSize: 19,
-              fontFamily: 'ShellBold',
+              fontFamily: 'ShellHeavy',
               color: AppColors.textPrimary,
               height: 1.5,
             ),
@@ -298,7 +292,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               text: afterText,
               style: const TextStyle(
                 fontSize: 15,
-                fontFamily: 'ShellBold',
+                fontFamily: 'ShellHeavy',
                 color: AppColors.textPrimary,
                 height: 1.5,
               ),

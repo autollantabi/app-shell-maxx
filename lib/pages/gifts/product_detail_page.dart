@@ -6,6 +6,7 @@ import '../../models/user_model.dart';
 import '../../api/user_api.dart';
 import '../../api/points_api.dart';
 import '../../contexts/points_provider.dart';
+import '../../utils/failed_image_cache.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final UserModel user;
@@ -118,7 +119,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       widget.title,
                       style: const TextStyle(
                         fontSize: 18,
-                        fontFamily: 'ShellBold',
+                        fontFamily: 'ShellHeavy',
                         color: AppColors.textPrimary,
                       ),
                       maxLines: 2,
@@ -289,7 +290,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         : widget.points.toString(),
                                     style: const TextStyle(
                                       fontSize: 18,
-                                      fontFamily: 'ShellBold',
+                                      fontFamily: 'ShellHeavy',
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
@@ -353,7 +354,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         _quantity.toString(),
                                         style: const TextStyle(
                                           fontSize: 16,
-                                          fontFamily: 'ShellBold',
+                                          fontFamily: 'ShellHeavy',
                                           color: AppColors.textPrimary,
                                         ),
                                       ),
@@ -453,29 +454,39 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         borderRadius: BorderRadius.circular(12),
         child: imagePath.isNotEmpty
             ? (imagePath.startsWith('http')
-                  ? Image.network(
-                      imagePath,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                  ? (FailedImageCache.isFailed(imagePath)
+                      ? Container(
                           color: Colors.grey[200],
                           child: const Icon(
                             Icons.image,
                             size: 100,
                             color: Colors.grey,
                           ),
-                        );
-                      },
-                    )
+                        )
+                      : Image.network(
+                          imagePath,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            FailedImageCache.addFailed(imagePath);
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                size: 100,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        ))
                   : Image.asset(
                       imagePath,
                       fit: BoxFit.contain,

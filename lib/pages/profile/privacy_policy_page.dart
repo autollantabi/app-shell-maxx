@@ -18,7 +18,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
-            fontFamily: 'ShellBold',
+            fontFamily: 'ShellHeavy',
           ),
         ),
         centerTitle: false,
