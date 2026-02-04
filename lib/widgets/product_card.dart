@@ -70,17 +70,17 @@ class ProductCard extends StatelessWidget {
       },
       child: Container(
         width: width,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Imagen del producto
+            // Imagen del producto: área flexible, imagen rellena el espacio (cover)
             Expanded(
-              flex: 3,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -96,66 +96,70 @@ class ProductCard extends StatelessWidget {
                   child: Center(
                     child: primaryImageUrl != null && primaryImageUrl.isNotEmpty
                         ? (FailedImageCache.isFailed(primaryImageUrl)
-                            ? Container(
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.image,
-                                  size: 50,
-                                  color: Colors.grey,
-                                ),
-                              )
-                            : Image.network(
-                                primaryImageUrl,
-                                fit: BoxFit
-                                    .scaleDown, // No estirar, mantener proporciones
-                                alignment: Alignment.center,
-                                errorBuilder: (context, error, stackTrace) {
-                                  FailedImageCache.addFailed(primaryImageUrl);
-                                  final localImage = product.localImagePath;
-                                  if (localImage != null) {
-                                    return Image.asset(
-                                      localImage,
-                                      fit: BoxFit.scaleDown,
-                                      errorBuilder: (context, error, stackTrace) {
+                              ? Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.image,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  ),
+                                )
+                              : Image.network(
+                                  primaryImageUrl,
+                                  fit: BoxFit.contain,
+                                  alignment: Alignment.center,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    FailedImageCache.addFailed(primaryImageUrl);
+                                    final localImage = product.localImagePath;
+                                    if (localImage != null) {
+                                      return Image.asset(
+                                        localImage,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                color: Colors.grey[200],
+                                                child: const Icon(
+                                                  Icons.image,
+                                                  size: 50,
+                                                  color: Colors.grey,
+                                                ),
+                                              );
+                                            },
+                                      );
+                                    }
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.image,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        final progress =
+                                            loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            (loadingProgress
+                                                    .expectedTotalBytes ??
+                                                1);
+                                        if (progress >= 1.0) return child;
                                         return Container(
                                           color: Colors.grey[200],
-                                          child: const Icon(
-                                            Icons.image,
-                                            size: 50,
-                                            color: Colors.grey,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
                                           ),
                                         );
                                       },
-                                    );
-                                  }
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: const Icon(
-                                      Icons.image,
-                                      size: 50,
-                                      color: Colors.grey,
-                                    ),
-                                  );
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  final progress =
-                                      loadingProgress.cumulativeBytesLoaded /
-                                      (loadingProgress.expectedTotalBytes ?? 1);
-                                  if (progress >= 1.0) return child;
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
-                                },
-                              ))
+                                ))
                         : product.localImagePath != null
                         ? Image.asset(
                             product.localImagePath!,
-                            fit: BoxFit
-                                .scaleDown, // No estirar, mantener proporciones
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey[200],
@@ -179,91 +183,88 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Información del producto
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Puntos centrados
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.emoji_events,
-                          color: AppColors.primary,
-                          size: 12,
+            // Puntos y botón siempre abajo (misma altura en todas las cards)
+            Padding(
+              padding: const EdgeInsets.only(right: 4, left: 4, top: 8, bottom: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Puntos centrados
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.emoji_events,
+                        color: AppColors.primary,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        product.points.toString(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'ShellHeavy',
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          product.points.toString(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'ShellHeavy',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    // Botón canjear
-                    Consumer<PointsProvider>(
-                      builder: (context, pointsProvider, child) {
-                        final hasEnoughPoints =
-                            product.points <= pointsProvider.availablePoints;
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Opacity(
-                              opacity: hasEnoughPoints ? 1.0 : 0.5,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondary,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Text(
-                                  'Canjear',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontFamily: 'ShellHeavy',
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  // Botón canjear
+                  Consumer<PointsProvider>(
+                    builder: (context, pointsProvider, child) {
+                      final hasEnoughPoints =
+                          product.points <= pointsProvider.availablePoints;
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Opacity(
+                            opacity: hasEnoughPoints ? 1.0 : 0.5,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 5,
                               ),
-                            ),
-                            // Mensaje de puntos faltantes
-                            if (!hasEnoughPoints) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                'Te faltan ${product.points - pointsProvider.availablePoints} puntos',
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Text(
+                                'Canjear',
                                 style: TextStyle(
-                                  fontSize: 9,
-                                  fontFamily: 'ShellTHAI',
-                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                  fontFamily: 'ShellHeavy',
                                 ),
                                 textAlign: TextAlign.center,
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                            ),
+                          ),
+                          // Espacio reservado para "Te faltan X puntos" (siempre ocupa sitio para no descuadrar)
+                          const SizedBox(height: 2),
+                          Opacity(
+                            opacity: hasEnoughPoints ? 0.0 : 1.0,
+                            child: Text(
+                              'Te faltan ${product.points - pointsProvider.availablePoints} puntos',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontFamily: 'ShellTHAI',
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
