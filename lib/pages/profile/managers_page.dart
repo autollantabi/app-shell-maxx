@@ -58,9 +58,7 @@ class _ManagersPageState extends State<ManagersPage> {
     });
 
     try {
-      final apiResponse = await UserApi.getVendedorManagers(
-        vendedorId: widget.user.id,
-      );
+      final apiResponse = await UserApi.getVendedorManagers();
       if (!mounted) return;
 
       // Usar rawData si data es null

@@ -117,11 +117,9 @@ class UserApi {
   }
 
   /// Obtener managers asociados a un vendedor
-  /// GET /manager-vendedor/vendedor/{vendedorId}/managers
-  static Future<ApiResponse<Map<String, dynamic>>> getVendedorManagers({
-    required String vendedorId,
-  }) async {
-    final endpoint = '/manager-vendedor/vendedor/$vendedorId/managers';
+  /// GET /manager-vendedor/vendedor/managers
+  static Future<ApiResponse<Map<String, dynamic>>> getVendedorManagers() async {
+    final endpoint = '/manager-vendedor/vendedor/managers';
     
     final apiResponse = await ApiConfig.getResponse<Map<String, dynamic>>(
       endpoint,
