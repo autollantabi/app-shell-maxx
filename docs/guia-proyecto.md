@@ -80,6 +80,15 @@ Está desarrollada en **Flutter**, orientada a **Android e iOS** en **portrait**
 
 ---
 
+## Notas recientes (comportamiento actual)
+
+- **Catálogo de regalos**: Las cards de producto son compactas; la imagen se muestra completa (sin recortar) y el bloque de puntos y botón “Canjear” queda siempre alineado abajo. Si al usuario le faltan puntos, el texto “Te faltan X puntos” reserva su espacio para que todas las cards tengan la misma altura y el grid no se descuadre.
+- **Cantidad en el canje**: Los productos pueden traer un campo `quantity` (cantidad de unidades que incluye ese canje). Cuando es mayor que 1, se muestra un chip en la esquina inferior derecha de la imagen con “x2”, “x3”, etc. Es solo informativo, no indica stock.
+- **Influencers y manager**: Al agregar o actualizar un influencer, se envía el código SAP del manager (`manager_sap_code`), que se obtiene de los datos del manager en la lista de managers (vendedor → managers → al abrir un manager se pasa su `sapCode` hasta la pantalla de agregar influencer).
+- **Depuración**: En el código no se usan `debugPrint` ni `print`; los errores de red o API no se imprimen en consola desde la app.
+
+---
+
 ## Decisiones históricas y código legado relevante
 
 - **Rutas**: no hay rutas nombradas ni GoRouter; toda la navegación es imperativa con `Navigator` y `MaterialPageRoute`. En `profile_page` y `redeem_success_page` se usa `pushNamedAndRemoveUntil('/', ...)`; la ruta `'/'` no está registrada, pero en Flutter el `home` suele actuar como ruta inicial, por lo que puede llevar a AuthWrapper. Ver [pendientes.md](pendientes.md).
