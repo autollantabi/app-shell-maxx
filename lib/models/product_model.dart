@@ -24,6 +24,8 @@ class ProductModel {
   final String description;
   final String category;
   final int points;
+  /// Cantidad de productos en este canje (informativo, no stock).
+  final int? quantity;
   final String? imagePath; // RUTA (legacy)
   final List<ProductRoute> routes; // ROUTES con {id, path, url}
   final DateTime createdAt;
@@ -74,6 +76,7 @@ class ProductModel {
     required this.description,
     required this.category,
     required this.points,
+    this.quantity,
     this.imagePath,
     this.routes = const [],
     required this.createdAt,
@@ -86,6 +89,8 @@ class ProductModel {
     final description = json['DESCRIPTION'] ?? json['description'] ?? '';
     final category = json['CATEGORY'] ?? json['category'] ?? '';
     final points = json['POINTS'] ?? json['points'] ?? 0;
+    final quantityRaw = json['QUANTITY'] ?? json['quantity'];
+    final quantity = quantityRaw != null ? int.tryParse(quantityRaw.toString()) : null;
     final imagePath = json['RUTA'] ?? json['ruta'] ?? json['imagePath'];
 
     // Parsear ROUTES
@@ -110,6 +115,7 @@ class ProductModel {
       description: description,
       category: category,
       points: points is int ? points : int.tryParse(points.toString()) ?? 0,
+      quantity: quantity,
       imagePath: imagePath,
       routes: routes,
       createdAt: DateTime.parse(
@@ -128,6 +134,7 @@ class ProductModel {
       'description': description,
       'category': category,
       'points': points,
+      if (quantity != null) 'quantity': quantity,
       'ruta': imagePath,
       'routes': routes.map((route) => route.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),

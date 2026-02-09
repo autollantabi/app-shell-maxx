@@ -12,10 +12,14 @@ class AddInfluencerPage extends StatefulWidget {
   /// ID del manager al que se asocia el influenciador (obligatorio; solo el vendedor usa este flujo).
   final String managerId;
 
+  /// Código SAP del manager (viene de la data del manager).
+  final String? managerSapCode;
+
   const AddInfluencerPage({
     super.key,
     required this.onSave,
     required this.managerId,
+    this.managerSapCode,
   });
 
   @override
@@ -227,6 +231,8 @@ class _AddInfluencerPageState extends State<AddInfluencerPage> {
         'birth_date': _selectedDate?.toIso8601String().split(
           'T',
         )[0], // Formato YYYY-MM-DD
+        if (widget.managerSapCode != null && widget.managerSapCode!.isNotEmpty)
+          'manager_sap_code': widget.managerSapCode!,
       };
 
       ApiResponse<Map<String, dynamic>> apiResponse;

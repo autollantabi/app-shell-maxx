@@ -69,9 +69,7 @@ class _ManagersPageState extends State<ManagersPage> {
           if (rawDataMap.containsKey('data') && rawDataMap['data'] is Map) {
             data = rawDataMap['data'] as Map<String, dynamic>;
           }
-        } catch (e) {
-          debugPrint('Error al extraer data de rawData: $e');
-        }
+        } catch (_) {}
       }
 
       if (apiResponse.success && data != null) {
@@ -89,6 +87,7 @@ class _ManagersPageState extends State<ManagersPage> {
                           .toString(),
                   'name': manager['name'] as String? ?? 'Sin nombre',
                   'isRegistered': manager['isRegistered'] as bool? ?? false,
+                  'sapCode': (manager['sapCode'] ?? manager['sap_code'] ?? manager['manager_sap_code'])?.toString(),
                 },
               )
               .toList()
@@ -311,6 +310,8 @@ class _ManagersPageState extends State<ManagersPage> {
                                           manager['name'] as String;
                                       final isRegistered =
                                           manager['isRegistered'] as bool;
+                                      final sapCode =
+                                          manager['sapCode'] as String?;
 
                                       return ListTile(
                                         contentPadding: EdgeInsets.zero,
@@ -368,6 +369,7 @@ class _ManagersPageState extends State<ManagersPage> {
                                                         ManagerInfluencersPage(
                                                       managerId: userId,
                                                       managerName: name,
+                                                      managerSapCode: sapCode,
                                                     ),
                                                   ),
                                                 );

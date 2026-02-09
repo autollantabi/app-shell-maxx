@@ -144,12 +144,8 @@ class ApiConfig {
           .get(Uri.parse(url), headers: headers)
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (response.statusCode >= 400) {
-        debugPrint('❌ GET $url - Status: ${response.statusCode}');
-      }
       return response;
     } catch (e) {
-      debugPrint('❌ Error en GET $url: $e');
       rethrow;
     }
   }
@@ -178,12 +174,8 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (response.statusCode >= 400) {
-        debugPrint('❌ POST $url - Status: ${response.statusCode}');
-      }
       return response;
     } catch (e) {
-      debugPrint('❌ Error en POST $url: $e');
       rethrow;
     }
   }
@@ -210,13 +202,8 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (response.statusCode >= 400) {
-        debugPrint('❌ PUT $url - Status: ${response.statusCode}');
-      }
-      
       return response;
     } catch (e) {
-      debugPrint('❌ Error en PUT $url: $e');
       rethrow;
     }
   }
@@ -243,13 +230,8 @@ class ApiConfig {
           )
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (response.statusCode >= 400) {
-        debugPrint('❌ PATCH $url - Status: ${response.statusCode}');
-      }
-      
       return response;
     } catch (e) {
-      debugPrint('❌ Error en PATCH $url: $e');
       rethrow;
     }
   }
@@ -271,13 +253,8 @@ class ApiConfig {
           .delete(Uri.parse(url), headers: headers)
           .timeout(Duration(seconds: timeoutSeconds));
       
-      if (response.statusCode >= 400) {
-        debugPrint('❌ DELETE $url - Status: ${response.statusCode}');
-      }
-      
       return response;
     } catch (e) {
-      debugPrint('❌ Error en DELETE $url: $e');
       rethrow;
     }
   }
@@ -575,13 +552,8 @@ class ApiConfig {
       // Convertir streamed response a response normal
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode >= 400) {
-        debugPrint('❌ PATCH Multipart $url - Status: ${response.statusCode}');
-      }
-
       return parseResponse<T>(response, dataParser: dataParser);
     } catch (e) {
-      debugPrint('❌ Error en PATCH Multipart: $e');
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
       );

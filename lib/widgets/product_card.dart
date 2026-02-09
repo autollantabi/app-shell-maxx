@@ -81,111 +81,155 @@ class ProductCard extends StatelessWidget {
           children: [
             // Imagen del producto: área flexible, imagen rellena el espacio (cover)
             Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  color: Colors.transparent,
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: Center(
-                    child: primaryImageUrl != null && primaryImageUrl.isNotEmpty
-                        ? (FailedImageCache.isFailed(primaryImageUrl)
-                              ? Container(
-                                  color: Colors.grey[200],
-                                  child: const Icon(
-                                    Icons.image,
-                                    size: 50,
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              : Image.network(
-                                  primaryImageUrl,
-                                  fit: BoxFit.contain,
-                                  alignment: Alignment.center,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    FailedImageCache.addFailed(primaryImageUrl);
-                                    final localImage = product.localImagePath;
-                                    if (localImage != null) {
-                                      return Image.asset(
-                                        localImage,
-                                        fit: BoxFit.contain,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Container(
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                  Icons.image,
-                                                  size: 50,
-                                                  color: Colors.grey,
-                                                ),
-                                              );
-                                            },
-                                      );
-                                    }
-                                    return Container(
+              child: Stack(
+                clipBehavior: Clip.antiAlias,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      color: Colors.transparent,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: Center(
+                        child:
+                            primaryImageUrl != null &&
+                                primaryImageUrl.isNotEmpty
+                            ? (FailedImageCache.isFailed(primaryImageUrl)
+                                  ? Container(
                                       color: Colors.grey[200],
                                       child: const Icon(
                                         Icons.image,
                                         size: 50,
                                         color: Colors.grey,
                                       ),
-                                    );
-                                  },
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
-                                          return child;
-                                        final progress =
-                                            loadingProgress
-                                                .cumulativeBytesLoaded /
-                                            (loadingProgress
-                                                    .expectedTotalBytes ??
-                                                1);
-                                        if (progress >= 1.0) return child;
-                                        return Container(
-                                          color: Colors.grey[200],
-                                          child: const Center(
-                                            child: CircularProgressIndicator(),
-                                          ),
-                                        );
-                                      },
-                                ))
-                        : product.localImagePath != null
-                        ? Image.asset(
-                            product.localImagePath!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
+                                    )
+                                  : Image.network(
+                                      primaryImageUrl,
+                                      fit: BoxFit.contain,
+                                      alignment: Alignment.center,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            FailedImageCache.addFailed(
+                                              primaryImageUrl,
+                                            );
+                                            final localImage =
+                                                product.localImagePath;
+                                            if (localImage != null) {
+                                              return Image.asset(
+                                                localImage,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Container(
+                                                        color: Colors.grey[200],
+                                                        child: const Icon(
+                                                          Icons.image,
+                                                          size: 50,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      );
+                                                    },
+                                              );
+                                            }
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              child: const Icon(
+                                                Icons.image,
+                                                size: 50,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            final progress =
+                                                loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                (loadingProgress
+                                                        .expectedTotalBytes ??
+                                                    1);
+                                            if (progress >= 1.0) return child;
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            );
+                                          },
+                                    ))
+                            : product.localImagePath != null
+                            ? Image.asset(
+                                product.localImagePath!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
                                 color: Colors.grey[200],
                                 child: const Icon(
                                   Icons.image,
                                   size: 50,
                                   color: Colors.grey,
                                 ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: Colors.grey[200],
-                            child: const Icon(
-                              Icons.image,
-                              size: 50,
-                              color: Colors.grey,
+                              ),
+                      ),
+                    ),
+                  ),
+                  if (product.quantity != null && product.quantity! > 1)
+                    Positioned(
+                      right: 6,
+                      bottom: 6,
+                      child: Material(
+                        color: AppColors.primary.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            'x${product.quantity}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'ShellHeavy',
+                              color: Colors.white,
                             ),
                           ),
-                  ),
-                ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             // Puntos y botón siempre abajo (misma altura en todas las cards)
             Padding(
-              padding: const EdgeInsets.only(right: 4, left: 4, top: 8, bottom: 2),
+              padding: const EdgeInsets.only(
+                right: 4,
+                left: 4,
+                top: 8,
+                bottom: 2,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,

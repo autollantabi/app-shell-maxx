@@ -80,11 +80,13 @@ class ManagerInfluencer {
 class ManagerInfluencersPage extends StatefulWidget {
   final String managerId;
   final String managerName;
+  final String? managerSapCode;
 
   const ManagerInfluencersPage({
     super.key,
     required this.managerId,
     required this.managerName,
+    this.managerSapCode,
   });
 
   @override
@@ -454,6 +456,7 @@ class _ManagerInfluencersPageState extends State<ManagerInfluencersPage> {
                       MaterialPageRoute(
                         builder: (context) => AddInfluencerPage(
                           managerId: widget.managerId,
+                          managerSapCode: widget.managerSapCode,
                           onSave: (AssociatedProfile profile) {
                             if (mounted) _loadInfluencers();
                           },

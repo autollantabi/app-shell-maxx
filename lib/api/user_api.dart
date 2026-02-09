@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import '../api.dart';
 import '../models/api_response.dart';
 
@@ -66,7 +65,6 @@ class UserApi {
       '/usuarios/search-influencer',
       body: {'email': email},
     );
-    debugPrint('searchInfluencer response: success=${response.success}, message=${response.message}, data=${response.data}, rawData=${response.rawData}');
     return response;
   }
 
@@ -124,7 +122,6 @@ class UserApi {
     final apiResponse = await ApiConfig.getResponse<Map<String, dynamic>>(
       endpoint,
     );
-    debugPrint('apiResponse: ${apiResponse.rawData}');
     
     // Extraer datos de rawData si data es null
     Map<String, dynamic>? extractedData;
@@ -136,9 +133,7 @@ class UserApi {
         if (rawDataMap.containsKey('data') && rawDataMap['data'] is Map) {
           extractedData = rawDataMap['data'] as Map<String, dynamic>;
         }
-      } catch (e) {
-        debugPrint('   ❌ Error al procesar rawData: $e');
-      }
+      } catch (_) {}
     }
     
     // Si data es null pero tenemos extractedData, crear nuevo ApiResponse
