@@ -727,22 +727,29 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (pickedFile != null) {
-        // Recortar la imagen
-        final croppedFile = await _cropImage(File(pickedFile.path));
-        
+        // En iOS la ruta de la cámara puede ser temporal; usar una copia estable para el cropper
+        final fileToCrop = await _stableImageFileForCrop(pickedFile.path);
+        if (fileToCrop == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudo acceder a la imagen capturada'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final croppedFile = await _cropImage(fileToCrop);
         if (croppedFile != null) {
           final bytes = await croppedFile.readAsBytes();
           if (!mounted) return;
 
-          // Actualizar UI inmediatamente para mostrar la imagen capturada
           setState(() {
             _profileImageBytes = bytes;
           });
-          
-          // Esperar un frame para asegurar que la UI se actualice antes de iniciar la subida
           await Future.delayed(const Duration(milliseconds: 50));
-
-          // Subir imagen al servidor en segundo plano
           _uploadProfileImage(bytes);
         }
       }
@@ -754,6 +761,21 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  /// Copia la imagen a un archivo temporal estable (necesario en iOS para el cropper).
+  Future<File?> _stableImageFileForCrop(String sourcePath) async {
+    try {
+      final source = File(sourcePath);
+      if (!await source.exists()) return null;
+      final ext = sourcePath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+      final tempDir = Directory.systemTemp;
+      final stableFile = File('${tempDir.path}/profile_crop_${DateTime.now().millisecondsSinceEpoch}.$ext');
+      await source.copy(stableFile.path);
+      return stableFile;
+    } catch (_) {
+      return File(sourcePath).existsSync() ? File(sourcePath) : null;
     }
   }
 
@@ -789,7 +811,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Sube la imagen de perfil al servidor usando PATCH /usuarios/{id}
+  /// Sube y guarda la imagen de perfil en el servidor (PATCH /usuarios/{id} multipart).
+  /// Se llama tanto al elegir foto de galería como al tomar foto con la cámara.
   Future<void> _uploadProfileImage(Uint8List imageBytes) async {
     if (!mounted) return;
 
@@ -830,15 +853,16 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       if (apiResponse.success) {
-        // Recargar datos del usuario actualizado en segundo plano (sin actualizar UI)
-        // No limpiamos _profileImageBytes para mantener la imagen local visible
-        // y evitar el efecto de recarga visual
-        _loadUserData();
-        
+        // La imagen ya se guardó en el servidor vía PATCH multipart; recargar usuario
+        // para obtener la URL actualizada y mostrar la foto guardada.
+        await _loadUserData();
         if (mounted) {
+          setState(() {
+            _profileImageBytes = null;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Foto de perfil actualizada correctamente'),
+              content: Text('Foto de perfil guardada correctamente'),
               backgroundColor: Colors.green,
             ),
           );

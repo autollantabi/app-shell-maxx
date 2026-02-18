@@ -51,5 +51,11 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Shell Maxx necesita acceso a la cámara para tomar tu foto de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shell Maxx necesita acceso a la galería para elegir o guardar tu foto de perfil.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Shell Maxx necesita permiso para guardar fotos en tu galería.</string>
 </dict>
 </plist>

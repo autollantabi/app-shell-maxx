@@ -6,6 +6,7 @@ import '../../api/auth_api.dart';
 import '../../api/user_api.dart';
 import '../../services/auth_service.dart';
 import 'forgot_password_page.dart';
+import 'join_club_page.dart';
 import 'loading_video_page.dart';
 
 enum LoginStep { email, password, createPassword }
@@ -327,7 +328,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 16),
 
                             // Botón Validar (solo en paso de email)
-                            if (_currentStep == LoginStep.email)
+                            if (_currentStep == LoginStep.email) ...[
                               SizedBox(
                                 width: double.infinity,
                                 height: 50,
@@ -362,6 +363,38 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                 ),
                               ),
+                              const SizedBox(height: 20),
+                              TextButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const JoinClubPage(),
+                                          ),
+                                        );
+                                      },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.textPrimary,
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  '¿Quieres ser parte de Club Shell Maxx?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontFamily: 'ShellBook',
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w500,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
 
                             // Campo de contraseña (si tiene contraseña)
                             if (_currentStep == LoginStep.password) ...[
