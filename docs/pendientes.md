@@ -46,7 +46,7 @@ Mejoras técnicas sugeridas, deuda técnica detectada y suposiciones o partes no
 | **Roles** | Mezcla de `UserType` (admin/manager/influencer) y `roleId` (1/2/3) e isManagerByRole/isVendedorByRole; conviene un criterio único para permisos en la UI. |
 | **Canje** | Dos vías: PointsApi.redeemProduct (/canjes) como principal y GiftsApi.redeemGift (/gifts/redeem); asegurar que no queden flujos huérfanos o inconsistentes. |
 | **Tests** | Casi inexistentes; cualquier refactor o cambio de API tiene riesgo alto. |
-| **Sesión** | Almacenada en claro en SharedPreferences; sin refresh token ni flujo de “sesión expirada” unificado. |
+| **Sesión** | Almacenada en claro en SharedPreferences; sin refresh token (requiere login manual al expirar). |
 
 ---
 

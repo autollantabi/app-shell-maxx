@@ -20,7 +20,9 @@ class ProductsProvider with ChangeNotifier {
   Map<String, List<ProductModel>> get productsByCategory => _productsByCategory;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  List<String> get categories => _productsByCategory.keys.toList();
+  List<String> get categories => _productsByCategory.keys
+      .where((cat) => cat.toUpperCase() != 'CARRUSEL')
+      .toList();
 
   /// Cargar productos desde caché
   Future<bool> _loadProductsFromCache() async {
@@ -200,6 +202,7 @@ class ProductsProvider with ChangeNotifier {
   void _groupProductsByCategory() {
     _productsByCategory.clear();
     for (var product in _products) {
+      if (product.category.toUpperCase() == 'CARRUSEL') continue;
       if (!_productsByCategory.containsKey(product.category)) {
         _productsByCategory[product.category] = [];
       }

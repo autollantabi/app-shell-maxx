@@ -194,4 +194,12 @@ class UserApi {
       fileNames: fileNames.isNotEmpty ? fileNames : null,
     );
   }
+
+  /// Obtener un usuario por su ID
+  /// GET /usuarios/{id}
+  static Future<ApiResponse<Map<String, dynamic>>> getUserById(String userId) async {
+    return await ApiConfig.getResponse<Map<String, dynamic>>(
+      '/usuarios/$userId',
+    );
+  }
 }

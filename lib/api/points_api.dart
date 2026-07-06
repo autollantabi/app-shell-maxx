@@ -120,4 +120,12 @@ class PointsApi {
       body: body,
     );
   }
+
+  /// Reclamar bono de cumpleaños
+  /// POST /puntos/bonus/{userId}
+  static Future<ApiResponse<Map<String, dynamic>>> claimBirthdayBonus(String userId) async {
+    return await ApiConfig.postResponse<Map<String, dynamic>>(
+      '/puntos/bonus/$userId',
+    );
+  }
 }

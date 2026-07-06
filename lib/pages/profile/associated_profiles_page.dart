@@ -15,6 +15,8 @@ class AssociatedProfile {
   final String email;
   final int? roleId;
   final String? sapCode;
+  final int puntos;
+
   AssociatedProfile({
     required this.id,
     required this.managerId,
@@ -26,6 +28,7 @@ class AssociatedProfile {
     required this.email,
     this.roleId,
     this.sapCode,
+    this.puntos = 0,
   });
 
   factory AssociatedProfile.fromApiData(Map<String, dynamic> json) {
@@ -44,6 +47,10 @@ class AssociatedProfile {
       email: influencer['EMAIL'] ?? influencer['email'] ?? '',
       roleId: influencer['ROLE_ID'] ?? influencer['roleId'],
       sapCode: influencer['SAP_CODE'] ?? influencer['sapCode'],
+      puntos: int.tryParse(
+            (influencer['puntos'] ?? json['puntos'] ?? 0).toString(),
+          ) ??
+          0,
     );
   }
 
@@ -77,55 +84,49 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
     });
 
     try {
-      final apiResponse = await UserApi.getMyInfluencers();
+      final apiResponse = await UserApi.getInfluencersByManagerId(
+        managerId: widget.user.id,
+      );
 
       if (apiResponse.success && mounted) {
         List<AssociatedProfile> profiles = [];
 
-        // Intentar obtener desde apiResponse.data
-        if (apiResponse.data != null) {
-          if (apiResponse.data is List) {
-            final dataList = apiResponse.data as List;
-            for (var item in dataList) {
+        dynamic raw = apiResponse.data;
+
+        // El endpoint devuelve {status, message, data: [...]}
+        // ApiResponse puede poner el array directamente en data o en rawData
+        if (raw is List) {
+          for (var item in raw) {
+            if (item is Map<String, dynamic>) {
+              profiles.add(AssociatedProfile.fromApiData(item));
+            }
+          }
+        } else if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+          final list = raw['data'];
+          if (list is List) {
+            for (var item in list) {
               if (item is Map<String, dynamic>) {
                 profiles.add(AssociatedProfile.fromApiData(item));
-              }
-            }
-          } else if (apiResponse.data is Map<String, dynamic>) {
-            final data = apiResponse.data as Map<String, dynamic>;
-            if (data.containsKey('data') && data['data'] is List) {
-              final dataList = data['data'] as List;
-              for (var item in dataList) {
-                if (item is Map<String, dynamic>) {
-                  profiles.add(AssociatedProfile.fromApiData(item));
-                }
               }
             }
           }
         }
 
-        // Si no está en data, intentar desde rawData
+        // Fallback: buscar en rawData si data no contenía los items
         if (profiles.isEmpty && apiResponse.rawData != null) {
-          Map<String, dynamic>? actualData = apiResponse.rawData;
+          final rawData = apiResponse.rawData!;
+          dynamic dataField = rawData['data'];
 
-          if (apiResponse.rawData!.containsKey('body')) {
-            final body = apiResponse.rawData!['body'];
-            if (body is Map<String, dynamic>) {
-              actualData = body;
-            } else if (body is String) {
-              try {
-                actualData = jsonDecode(body) as Map<String, dynamic>?;
-              } catch (e) {}
-            }
+          if (dataField is String) {
+            try {
+              dataField = jsonDecode(dataField);
+            } catch (_) {}
           }
 
-          if (actualData != null && actualData.containsKey('data')) {
-            final data = actualData['data'];
-            if (data is List) {
-              for (var item in data) {
-                if (item is Map<String, dynamic>) {
-                  profiles.add(AssociatedProfile.fromApiData(item));
-                }
+          if (dataField is List) {
+            for (var item in dataField) {
+              if (item is Map<String, dynamic>) {
+                profiles.add(AssociatedProfile.fromApiData(item));
               }
             }
           }
@@ -146,6 +147,7 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +213,7 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
         : Colors.green.withValues(alpha: 0.2);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16, right: 16, left: 16, top: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           Expanded(
@@ -227,17 +229,26 @@ class _AssociatedProfilesPageState extends State<AssociatedProfilesPage> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                if (profile.sapCode != null) ...[
+                if (profile.email.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'ID ${profile.sapCode}',
+                    profile.email,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontFamily: 'ShellBook',
                       color: Colors.grey[600],
                     ),
                   ),
                 ],
+                const SizedBox(height: 2),
+                Text(
+                  '${profile.puntos} Puntos Disponibles',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'ShellBook',
+                    color: Colors.grey[500],
+                  ),
+                ),
               ],
             ),
           ),

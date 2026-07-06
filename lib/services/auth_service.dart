@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/user_model.dart';
 import '../api/auth_api.dart';
 import '../api.dart';
+import '../main.dart';
+import '../widgets/session_expired_popup.dart';
 
 /// Resultado del login
 class LoginResult {
@@ -15,6 +18,7 @@ class LoginResult {
 class AuthService {
   static const String _userKey = 'user_session';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _lastEmailKey = 'last_login_email';
 
   static AuthService? _instance;
   static AuthService get instance => _instance ??= AuthService._();
@@ -48,10 +52,16 @@ class AuthService {
   // Iniciar sesión y guardar usuario
   Future<LoginResult?> login(String email, String password) async {
     try {
+      // Guardar el correo localmente siempre que se intente (o solo al éxito)
+      // Lo guardamos al éxito para asegurar que sea válido
+      
       // Llamar a la API de autenticación
       final apiResponse = await AuthApi.login(email: email, password: password);
 
       if (apiResponse.success) {
+        // Guardar email para persistencia
+        await _saveEmail(email);
+        
         // Obtener idSession de la respuesta
         String? idSession = apiResponse.getValue<String>('idSession');
 
@@ -153,6 +163,42 @@ class AuthService {
   Future<void> updateUser(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
+  }
+
+  // Guardar el último correo usado
+  Future<void> _saveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastEmailKey, email);
+  }
+
+  // Obtener el último correo usado
+  Future<String?> getLastEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_lastEmailKey);
+  }
+
+  // Bandera para evitar múltiples diálogos de expiración al mismo tiempo
+  bool _isShowingSessionExpired = false;
+
+  // Notificar que la sesión ha expirado
+  void notifySessionExpired() {
+    if (_isShowingSessionExpired) return;
+
+    final context = MyApp.navigatorKey.currentContext;
+    if (context != null) {
+      _isShowingSessionExpired = true;
+      
+      // Asegurarse de limpiar la sesión localmente
+      logout().then((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const SessionExpiredPopup(),
+        ).then((_) {
+          _isShowingSessionExpired = false;
+        });
+      });
+    }
   }
 
   // Verificar si la sesión es válida (opcional: agregar expiración)

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import '../../theme/app_colors.dart';
 import '../../models/user_model.dart';
 import '../../api/user_api.dart';
@@ -43,9 +42,7 @@ class _ManagersPageState extends State<ManagersPage> {
     return _managers
         .where(
           (m) =>
-              (m['name'] as String?)
-                  ?.toLowerCase()
-                  .contains(_searchQuery) ??
+              (m['name'] as String?)?.toLowerCase().contains(_searchQuery) ??
               false,
         )
         .toList();
@@ -59,6 +56,8 @@ class _ManagersPageState extends State<ManagersPage> {
 
     try {
       final apiResponse = await UserApi.getVendedorManagers();
+      //NO DEVUELVE LA CANTIDAD DE PUNTOS
+
       if (!mounted) return;
 
       // Usar rawData si data es null
@@ -87,7 +86,12 @@ class _ManagersPageState extends State<ManagersPage> {
                           .toString(),
                   'name': manager['name'] as String? ?? 'Sin nombre',
                   'isRegistered': manager['isRegistered'] as bool? ?? false,
-                  'sapCode': (manager['sapCode'] ?? manager['sap_code'] ?? manager['manager_sap_code'])?.toString(),
+                  'sapCode':
+                      (manager['sapCode'] ??
+                              manager['sap_code'] ??
+                              manager['manager_sap_code'])
+                          ?.toString(),
+                  'points': (manager['puntos'].toString()),
                 },
               )
               .toList()
@@ -157,229 +161,229 @@ class _ManagersPageState extends State<ManagersPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                            fontFamily: 'ShellBook',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _loadManagers,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secondary,
-                            foregroundColor: AppColors.textPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(26),
-                            ),
-                          ),
-                          child: const Text(
-                            'Reintentar',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'ShellHeavy',
-                            ),
-                          ),
-                        ),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.grey[400],
                     ),
-                  )
-                : _managers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No hay managers asociados',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                                fontFamily: 'ShellBook',
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Barra de búsqueda
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Buscar por nombre...',
-                                hintStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                  fontFamily: 'ShellBook',
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: Colors.grey[500],
-                                  size: 22,
-                                ),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                        },
-                                        color: Colors.grey[600],
-                                      )
-                                    : null,
-                                filled: true,
-                                fillColor: Colors.grey[100],
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'ShellBook',
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: _filteredManagers.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.search_off,
-                                          size: 64,
-                                          color: Colors.grey[400],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'Ningún manager coincide con la búsqueda',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.grey[600],
-                                            fontFamily: 'ShellBook',
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 8,
-                                    ),
-                                    itemCount: _filteredManagers.length,
-                                    separatorBuilder: (context, index) =>
-                                        Divider(
-                                            height: 1,
-                                            thickness: 1,
-                                            color: Colors.grey[300]),
-                                    itemBuilder: (context, index) {
-                                      final manager =
-                                          _filteredManagers[index];
-                                      final userId =
-                                          manager['userId'] as String;
-                                      final name =
-                                          manager['name'] as String;
-                                      final isRegistered =
-                                          manager['isRegistered'] as bool;
-                                      final sapCode =
-                                          manager['sapCode'] as String?;
-
-                                      return ListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        title: Text(
-                                          name,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontFamily: 'ShellBook',
-                                          ),
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets
-                                                  .symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: isRegistered
-                                                    ? Colors.green[100]
-                                                    : Colors.grey[200],
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Text(
-                                                isRegistered
-                                                    ? 'Activo'
-                                                    : 'Inactivo',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontFamily: 'ShellBook',
-                                                  color: isRegistered
-                                                      ? Colors.green[800]
-                                                      : Colors.grey[700],
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              Icons.chevron_right,
-                                              color: Colors.grey[400],
-                                              size: 20,
-                                            ),
-                                          ],
-                                        ),
-                                        onTap: userId.isEmpty
-                                            ? null
-                                            : () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ManagerInfluencersPage(
-                                                      managerId: userId,
-                                                      managerName: name,
-                                                      managerSapCode: sapCode,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                      );
-                                    },
-                                ),
-                          ),
-                        ],
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontFamily: 'ShellBook',
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _loadManagers,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        foregroundColor: AppColors.textPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                      ),
+                      child: const Text(
+                        'Reintentar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'ShellHeavy',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : _managers.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No hay managers asociados',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontFamily: 'ShellBook',
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Barra de búsqueda
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por nombre...',
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                          fontFamily: 'ShellBook',
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.grey[500],
+                          size: 22,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                                color: Colors.grey[600],
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'ShellBook',
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: _filteredManagers.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Ningún manager coincide con la búsqueda',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'ShellBook',
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 8,
+                            ),
+                            itemCount: _filteredManagers.length,
+                            separatorBuilder: (context, index) => Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: Colors.grey[300],
+                            ),
+                            itemBuilder: (context, index) {
+                              final manager = _filteredManagers[index];
+                              final userId = manager['userId'] as String;
+                              final name = manager['name'] as String;
+                              final isRegistered =
+                                  manager['isRegistered'] as bool;
+                              final sapCode = manager['sapCode'] as String?;
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'ShellHeavy',
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${manager['points']} Puntos Disponibles',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'ShellBook',
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isRegistered
+                                            ? Colors.green[100]
+                                            : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        isRegistered ? 'Activo' : 'Inactivo',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontFamily: 'ShellBook',
+                                          color: isRegistered
+                                              ? Colors.green[800]
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[400],
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                                onTap: userId.isEmpty
+                                    ? null
+                                    : () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ManagerInfluencersPage(
+                                                  managerId: userId,
+                                                  managerName: name,
+                                                  managerSapCode: sapCode,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
       ),
     );
   }

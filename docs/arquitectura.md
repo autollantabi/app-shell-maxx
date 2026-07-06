@@ -71,7 +71,8 @@ app-shell-maxx/
 │   │   ├── auth_api.dart         # Login, logout, verifyPassword, forgot/reset password, verify OTP, refresh, me, updateLastLogin
 │   │   ├── user_api.dart         # ChangePassword, getUserAddress, influencers/managers, updateUserWithImage (multipart)
 │   │   ├── gifts_api.dart        # getGifts, getGiftById, redeemGift, getRedeemHistory, getCategories
-│   │   ├── points_api.dart       # getCurrentPoints, getMyPoints, getPointsHistory, redeemProduct, getMyRedemptions, etc.
+│   │   ├── points_api.dart       # getCurrentPoints, getMyPoints, getPointsHistory, redeemProduct, claimBirthdayBonus, etc.
+│   │   ├── notifications_api.dart# Obtener y marcar notificaciones como leídas
 │   │   └── README.md
 │   ├── contexts/
 │   │   ├── points_provider.dart  # Estado global de puntos + caché
@@ -81,16 +82,19 @@ app-shell-maxx/
 │   ├── models/
 │   │   ├── api_response.dart    # ApiResponse<T> (success, message, data, rawData)
 │   │   ├── user_model.dart      # UserModel (id, name, email, type, roleId, profileImage, ...)
-│   │   └── product_model.dart   # ProductModel, ProductRoute; localImagePath por nombre
+│   │   ├── product_model.dart   # ProductModel, ProductRoute; localImagePath por nombre
+│   │   └── notification_model.dart # Modelo para notificaciones (NotificationModel)
 │   ├── pages/
 │   │   ├── intro/               # intro_page.dart (splash → Login)
 │   │   ├── auth/                # login, loading_video, forgot_password, verify_code, reset_password
 │   │   ├── onboarding/          # onboarding_page.dart
 │   │   ├── home/                # home.dart (ClubShellHome)
-│   │   ├── gifts/                # gifts_page, product_detail_page, redeem_success_page
-│   │   └── profile/             # profile_page, addresses, redeemed_prizes, managers, influencers, help, privacy, change_password
+│   │   ├── gifts/               # gifts_page, product_detail_page, redeem_success_page
+│   │   ├── notifications/       # notifications_page.dart
+│   │   └── profile/             # profile_page, addresses, redeemed_prizes, managers, influencers, help, privacy, change_password, earn_extra_points_page, trivia_futbolera_page, etc.
 │   ├── services/
-│   │   └── auth_service.dart    # Singleton: isLoggedIn, getCurrentUser, login, logout, updateUser
+│   │   ├── auth_service.dart    # Singleton: isLoggedIn, getCurrentUser, login, logout, updateUser, notifySessionExpired
+│   │   └── birthday_service.dart# Lógica para mostrar bono de cumpleaños anual
 │   ├── theme/
 │   │   ├── app_colors.dart       # Colores Shell (primary, secondary, success, error, etc.)
 │   │   └── app_theme.dart        # lightTheme, darkTheme (Material 3, Shell)
@@ -98,7 +102,9 @@ app-shell-maxx/
 │   │   └── failed_image_cache.dart # Set de URLs de imágenes fallidas (evitar reintentos)
 │   └── widgets/
 │       ├── custom_bottom_nav.dart  # Barra inferior 3 tabs (Regalos, Home, Perfil)
-│       └── product_card.dart       # Card de producto con imagen, puntos, botón Canjear
+│       ├── product_card.dart       # Card de producto con imagen, puntos, botón Canjear
+│       ├── birthday_popup.dart     # Popup de feliz cumpleaños
+│       └── session_expired_popup.dart # Popup de sesión expirada
 ├── assets/
 │   ├── images/                  # app, brand, carrousel, products, icons
 │   └── videos/                  # animationShell.mp4
@@ -118,9 +124,9 @@ app-shell-maxx/
 | **api/**   | Llamadas HTTP por dominio (auth, user, gifts, points). Sin estado. |
 | **contexts/** | Estado global (puntos, productos) y caché en SharedPreferences. |
 | **layouts/**  | Composición de pantallas principales (MainLayout con PageView de 3 páginas). |
-| **models/**   | Modelos de datos y serialización JSON (ApiResponse, UserModel, ProductModel). |
-| **pages/**    | Pantallas completas y flujos (auth, onboarding, home, gifts, profile). |
-| **services/** | Lógica de negocio reutilizable (auth, sesión). |
+| **models/**   | Modelos de datos y serialización JSON (ApiResponse, UserModel, ProductModel, NotificationModel). |
+| **pages/**    | Pantallas completas y flujos (auth, onboarding, home, gifts, profile, notifications). |
+| **services/** | Lógica de negocio reutilizable (auth, sesión, birthday). |
 | **theme/**    | Colores y tema Material (AppColors, AppTheme). |
 | **widgets/**  | Componentes reutilizables (bottom nav, product card). |
 | **utils/**    | Utilidades (p. ej. caché de URLs de imágenes fallidas). |

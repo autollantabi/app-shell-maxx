@@ -152,8 +152,9 @@ class ProductCard extends StatelessWidget {
                                           },
                                       loadingBuilder:
                                           (context, child, loadingProgress) {
-                                            if (loadingProgress == null)
+                                            if (loadingProgress == null) {
                                               return child;
+                                            }
                                             final progress =
                                                 loadingProgress
                                                     .cumulativeBytesLoaded /

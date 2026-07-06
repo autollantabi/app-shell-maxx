@@ -9,6 +9,7 @@ import '../../contexts/products_provider.dart';
 import '../../contexts/points_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/product_card.dart';
+import '../../services/birthday_service.dart';
 
 /// Widget para la lista de productos del home que mantiene el estado vivo
 class _HomeProductsList extends StatefulWidget {
@@ -49,9 +50,13 @@ class _HomeProductsListState extends State<_HomeProductsList>
           );
         }
 
-        // Obtener productos que el usuario puede reclamar
+        // Obtener productos que el usuario puede reclamar (excluyendo los del CARRUSEL)
         final pointsProvider = context.watch<PointsProvider>();
-        final affordableProducts = productsProvider.products
+        final availableProducts = productsProvider.products
+            .where((p) => p.category.toUpperCase() != 'CARRUSEL')
+            .toList();
+
+        final affordableProducts = availableProducts
             .where(
               (product) => product.points <= pointsProvider.availablePoints,
             )
@@ -67,7 +72,7 @@ class _HomeProductsListState extends State<_HomeProductsList>
         if (productsToShow.length < 5) {
           final remainingCount = 5 - productsToShow.length;
           final selectedIds = productsToShow.map((p) => p.id).toSet();
-          final otherProducts = productsProvider.products
+          final otherProducts = availableProducts
               .where((product) => !selectedIds.contains(product.id))
               .take(remainingCount)
               .toList();
@@ -118,7 +123,7 @@ class _HomeProductsListState extends State<_HomeProductsList>
 
 class ClubShellHome extends StatefulWidget {
   final UserModel user;
-  final Function(UserModel)? onUserUpdated;
+  final void Function(UserModel)? onUserUpdated;
 
   const ClubShellHome({super.key, required this.user, this.onUserUpdated});
 
@@ -222,6 +227,19 @@ class _ClubShellHomeState extends State<ClubShellHome> {
           setState(() {
             _currentUser = updatedUser;
           });
+
+          // Verificar cumpleaños
+          if (mounted) {
+            BirthdayService.checkAndShowBirthdayGift(
+              context,
+              updatedUser,
+              onRefresh: () {
+                if (mounted) {
+                  context.read<PointsProvider>().refresh();
+                }
+              },
+            );
+          }
 
           // Notificar al padre que el usuario fue actualizado
           if (widget.onUserUpdated != null) {
@@ -511,20 +529,33 @@ class _ClubShellHomeState extends State<ClubShellHome> {
   }
 
   List<Map<String, dynamic>> _getBannerItems() {
-    return [
-      {
-        'image': 'assets/images/carrousel/gorraFerrari.png',
-        'action': () {}, // Sin acción por ahora
-      },
-      {
-        'image': 'assets/images/carrousel/mobiliarioShell.png',
-        'action': () {}, // Sin acción por ahora
-      },
-    ];
+    final productsProvider = context.read<ProductsProvider>();
+    final carouselProducts = productsProvider.products
+        .where((p) => p.category.toUpperCase() == 'CARRUSEL')
+        .toList();
+
+    if (carouselProducts.isNotEmpty) {
+      final List<Map<String, dynamic>> items = [];
+      for (var product in carouselProducts) {
+        for (var route in product.routes) {
+          if (route.url != null && route.url!.isNotEmpty) {
+            items.add({'image': route.url, 'action': () {}});
+          }
+        }
+      }
+
+      if (items.isNotEmpty) return items;
+    }
+
+    return [];
   }
 
   Widget _buildBannerCarousel() {
     final bannerItems = _getBannerItems();
+
+    if (bannerItems.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       children: [
@@ -542,6 +573,9 @@ class _ClubShellHomeState extends State<ClubShellHome> {
             itemBuilder: (context, index) {
               final item = bannerItems[index];
               final action = item['action'] as VoidCallback?;
+              final imagePath = item['image'] as String;
+              final isNetworkImage = imagePath.startsWith('http');
+
               return GestureDetector(
                 onTap: action,
                 child: Container(
@@ -551,19 +585,39 @@ class _ClubShellHomeState extends State<ClubShellHome> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    item['image'] as String,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.image,
-                        size: 48,
-                        color: Colors.grey,
-                      );
-                    },
-                  ),
+                  child: isNetworkImage
+                      ? Image.network(
+                          imagePath,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          height: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.grey,
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          imagePath,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.image,
+                              size: 48,
+                              color: Colors.grey,
+                            );
+                          },
+                        ),
                 ),
               );
             },

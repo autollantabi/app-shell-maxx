@@ -4,11 +4,14 @@ import '../widgets/custom_bottom_nav.dart';
 import '../pages/home/home.dart';
 import '../pages/gifts/gifts_page.dart';
 import '../pages/profile/profile_page.dart';
+import '../pages/notifications/notifications_page.dart';
+
 
 class MainLayout extends StatefulWidget {
   final UserModel user;
+  final int initialIndex;
 
-  const MainLayout({super.key, required this.user});
+  const MainLayout({super.key, required this.user, this.initialIndex = 1});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -22,6 +25,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
     _currentUser = widget.user;
   }
@@ -69,7 +73,34 @@ class _MainLayoutState extends State<MainLayout> {
           ),
         ),
         centerTitle: false,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Stack(
+                children: [
+                  Icon(Icons.notifications_outlined, color: Colors.black, size: 26),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: CircleAvatar(
+                      radius: 5,
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                );
+              },
+            ),
+          ),
+        ],
       ),
+
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {

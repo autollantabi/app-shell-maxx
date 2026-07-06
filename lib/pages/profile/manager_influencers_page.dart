@@ -11,6 +11,8 @@ class ManagerInfluencer {
   final String apellido;
   final String email;
   final String status;
+  final String puntos;
+
   /// ID de la relación manager-influencer (para eliminar asociación).
   final int? associationId;
 
@@ -20,6 +22,7 @@ class ManagerInfluencer {
     required this.apellido,
     required this.email,
     required this.status,
+    this.puntos = '0',
     this.associationId,
   });
 
@@ -37,7 +40,9 @@ class ManagerInfluencer {
     int? associationId;
     final rawAssocId = json['ID'] ?? json['id'];
     if (rawAssocId != null) {
-      associationId = rawAssocId is int ? rawAssocId : int.tryParse(rawAssocId.toString());
+      associationId = rawAssocId is int
+          ? rawAssocId
+          : int.tryParse(rawAssocId.toString());
     }
 
     // Id del influenciador (no confundir con el ID de la asociación anterior).
@@ -67,6 +72,10 @@ class ManagerInfluencer {
           json['EMAIL'] ??
           json['email'] ??
           '',
+      puntos:
+          (influencer['puntos']?.toString() ??
+          json['puntos']?.toString() ??
+          '0'),
       status: status,
       associationId: associationId,
     );
@@ -178,7 +187,9 @@ class _ManagerInfluencersPageState extends State<ManagerInfluencersPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se puede eliminar esta asociación. Falta el ID de relación.'),
+          content: Text(
+            'No se puede eliminar esta asociación. Falta el ID de relación.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -223,7 +234,11 @@ class _ManagerInfluencersPageState extends State<ManagerInfluencersPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(apiResponse.message.isNotEmpty ? apiResponse.message : 'Error al eliminar'),
+            content: Text(
+              apiResponse.message.isNotEmpty
+                  ? apiResponse.message
+                  : 'Error al eliminar',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -272,163 +287,167 @@ class _ManagerInfluencersPageState extends State<ManagerInfluencersPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                                fontFamily: 'ShellBook',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: _loadInfluencers,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.secondary,
+                              foregroundColor: AppColors.textPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                            ),
+                            child: const Text(
+                              'Reintentar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'ShellHeavy',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _influencers.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay influenciadores asociados',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontFamily: 'ShellBook',
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ).copyWith(bottom: 16),
+                      itemCount: _influencers.length,
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.grey[300],
+                      ),
+                      itemBuilder: (context, index) {
+                        final inf = _influencers[index];
+                        final isActive = inf.status == 'active';
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
                             children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 64,
-                                color: Colors.grey[400],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${inf.nombre} ${inf.apellido}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontFamily: 'ShellHeavy',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    if (inf.email.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        inf.email,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontFamily: 'ShellBook',
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${inf.puntos} Puntos Disponibles',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'ShellBook',
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              Padding(
+                              Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24),
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? Colors.green[100]
+                                      : Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                                 child: Text(
-                                  _errorMessage!,
+                                  inf.estado,
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
+                                    fontSize: 12,
                                     fontFamily: 'ShellBook',
+                                    color: isActive
+                                        ? Colors.green[800]
+                                        : Colors.grey[700],
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: _loadInfluencers,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.secondary,
-                                  foregroundColor: AppColors.textPrimary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(26),
-                                  ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                  size: 22,
                                 ),
-                                child: const Text(
-                                  'Reintentar',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: 'ShellHeavy',
-                                  ),
+                                onPressed: () =>
+                                    _confirmAndDeleteAssociation(inf),
+                                tooltip: 'Eliminar asociación',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 40,
                                 ),
                               ),
                             ],
                           ),
-                        )
-                      : _influencers.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.people_outline,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No hay influenciadores asociados',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
-                                      fontFamily: 'ShellBook',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 16,
-                              ).copyWith(
-                                bottom: 16,
-                              ),
-                              itemCount: _influencers.length,
-                              separatorBuilder: (context, index) => Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: Colors.grey[300]),
-                              itemBuilder: (context, index) {
-                                final inf = _influencers[index];
-                                final isActive = inf.status == 'active';
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${inf.nombre} ${inf.apellido}',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontFamily: 'ShellHeavy',
-                                                color: AppColors.textPrimary,
-                                              ),
-                                            ),
-                                            if (inf.email.isNotEmpty) ...[
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                inf.email,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontFamily: 'ShellBook',
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isActive
-                                              ? Colors.green[100]
-                                              : Colors.grey[200],
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          inf.estado,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontFamily: 'ShellBook',
-                                            color: isActive
-                                                ? Colors.green[800]
-                                                : Colors.grey[700],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                          size: 22,
-                                        ),
-                                        onPressed: () =>
-                                            _confirmAndDeleteAssociation(inf),
-                                        tooltip: 'Eliminar asociación',
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 40,
-                                          minHeight: 40,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                        );
+                      },
+                    ),
             ),
           ),
           // Botón sticky: Asociar influenciador
@@ -475,10 +494,7 @@ class _ManagerInfluencersPageState extends State<ManagerInfluencersPage> {
                   ),
                   child: const Text(
                     'Asociar influenciador',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'ShellHeavy',
-                    ),
+                    style: TextStyle(fontSize: 16, fontFamily: 'ShellHeavy'),
                   ),
                 ),
               ),

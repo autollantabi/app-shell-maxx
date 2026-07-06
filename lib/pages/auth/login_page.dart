@@ -31,6 +31,21 @@ class _LoginPageState extends State<LoginPage> {
   bool _hasPassword = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadLastEmail();
+  }
+
+  Future<void> _loadLastEmail() async {
+    final email = await AuthService.instance.getLastEmail();
+    if (email != null && mounted) {
+      setState(() {
+        _emailController.text = email;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();

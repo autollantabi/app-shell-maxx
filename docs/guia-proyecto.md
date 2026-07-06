@@ -9,9 +9,10 @@ Resumen para que un desarrollador nuevo entienda qué es el proyecto, cómo empe
 **Shell Maxx** (paquete `app_shell`) es la app móvil del programa de lealtad Club Shell Maxx. Los usuarios (influenciadores, managers, vendedores) pueden:
 
 - Iniciar sesión con email y contraseña (o crear contraseña en el primer acceso).
-- Ver sus puntos (disponibles, del mes, acumulados, extra).
+- Ver sus puntos (disponibles, del mes, acumulados, extra) y ganar puntos extra mediante Trivia Futbolera o Participaciones.
 - Ver un catálogo de productos por categoría y canjear puntos por productos.
 - Gestionar perfil (avatar, direcciones, premios canjeados) y, según rol, managers e influencers.
+- Recibir y leer notificaciones, y obtener un bono de puntos en su cumpleaños.
 - Recuperar contraseña por email y OTP.
 
 Está desarrollada en **Flutter**, orientada a **Android e iOS** en **portrait**. La lógica de negocio y datos dependen de un backend en `https://api.maxximundo.com` (API REST con sesión por header `id-session`).
@@ -54,8 +55,8 @@ Está desarrollada en **Flutter**, orientada a **Android e iOS** en **portrait**
 ## APIs e integraciones (resumen)
 
 - **Una sola API REST**: base `https://api.maxximundo.com/api/app-shell` (o `/api/app-shell/dev` en debug).
-- **Autenticación**: header `id-session` con el valor devuelto en el login; no Bearer JWT.
-- **Módulos**: Auth (login, logout, recuperar contraseña, me), User (perfil, direcciones, managers/influencers), Points (puntos, canjes), Gifts/Productos (catálogo).
+- **Autenticación**: header `id-session` con el valor devuelto en el login; no Bearer JWT. Si el token expira (401), se muestra un popup y se fuerza el logout.
+- **Módulos**: Auth (login, logout, recuperar contraseña, me), User (perfil, direcciones, managers/influencers), Points (puntos, canjes), Gifts/Productos (catálogo) y Notificaciones.
 - Detalle de endpoints, servicios que los usan y riesgos: [docs/apis.md](apis.md).
 
 ---
@@ -84,6 +85,8 @@ Está desarrollada en **Flutter**, orientada a **Android e iOS** en **portrait**
 
 - **Catálogo de regalos**: Las cards de producto son compactas; la imagen se muestra completa (sin recortar) y el bloque de puntos y botón “Canjear” queda siempre alineado abajo. Si al usuario le faltan puntos, el texto “Te faltan X puntos” reserva su espacio para que todas las cards tengan la misma altura y el grid no se descuadre.
 - **Cantidad en el canje**: Los productos pueden traer un campo `quantity` (cantidad de unidades que incluye ese canje). Cuando es mayor que 1, se muestra un chip en la esquina inferior derecha de la imagen con “x2”, “x3”, etc. Es solo informativo, no indica stock.
+- **Manejo de Sesión Expirada**: Si cualquier endpoint devuelve un HTTP 401, el cliente (`ApiConfig`) notifica globalmente a la app y se despliega el `SessionExpiredPopup`. Tras aceptarlo, se limpia la sesión y el usuario vuelve al login.
+- **Bono de Cumpleaños**: Se evalúa al iniciar. Si es el cumpleaños del usuario, se levanta el `BirthdayPopup` para otorgar un bono a través de la API, previniendo que se muestre más de una vez en el mismo año.
 - **Influencers y manager**: Al agregar o actualizar un influencer, se envía el código SAP del manager (`manager_sap_code`), que se obtiene de los datos del manager en la lista de managers (vendedor → managers → al abrir un manager se pasa su `sapCode` hasta la pantalla de agregar influencer).
 - **Depuración**: En el código no se usan `debugPrint` ni `print`; los errores de red o API no se imprimen en consola desde la app.
 

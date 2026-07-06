@@ -24,10 +24,10 @@ Justificación de tecnologías elegidas, alternativas que se pueden inferir del 
 
 ## HTTP y capa API
 
-- **Decisión**: paquete `http` con un cliente centralizado en `ApiConfig` (en móvil, `IOClient` con timeouts); métodos estáticos por dominio en `auth_api`, `user_api`, `points_api`, `gifts_api`.
-- **Ventajas**: un solo punto para baseUrl, headers, idSession, timeouts y parseo de errores; reutilización de `ApiResponse<T>` y `parseResponse`.
+- **Decisión**: paquete `http` con un cliente centralizado en `ApiConfig` (en móvil, `IOClient` con timeouts); métodos estáticos por dominio en `auth_api`, `user_api`, `points_api`, `gifts_api`, `notifications_api`.
+- **Ventajas**: un solo punto para baseUrl, headers, idSession, timeouts y parseo de errores; reutilización de `ApiResponse<T>` y `parseResponse`. Centraliza también la intercepción del status `401 Unauthorized` para expiración de sesión.
 - **Alternativas**: Dio (interceptors, cancelación), retrofit-style. No se usan en el proyecto.
-- **Trade-off**: no hay interceptors formales (p. ej. refresh token o retry); la lógica de “reintentar” o “desloguear en 401” no está centralizada en el cliente.
+- **Trade-off**: al no usar `Dio`, el código de intercepción se hace manualmente dentro de `parseResponse`, lo que hace que añadir lógicas complejas (como retry y refresh token) sea menos directo.
 
 ---
 
@@ -36,7 +36,7 @@ Justificación de tecnologías elegidas, alternativas que se pueden inferir del 
 - **Decisión**: el backend devuelve `idSession` en el login; la app lo guarda y lo envía en el header `id-session`. No se usa JWT en headers ni refresh token en el código revisado.
 - **Ventajas**: implementación simple; el backend controla la validez de la sesión.
 - **Alternativas**: Bearer token, OAuth2, refresh token. No implementadas.
-- **Trade-off**: si la sesión expira, el usuario verá errores 401 hasta que vuelva a hacer login; no hay flujo automático de renovación. La persistencia es en SharedPreferences (no cifrado); ver [pendientes.md](pendientes.md) sobre flutter_secure_storage.
+- **Trade-off**: la persistencia es en SharedPreferences (no cifrado); ver [pendientes.md](pendientes.md) sobre flutter_secure_storage. Aunque ya no hay errores silenciosos de 401 (pues hay un popup centralizado de "sesión expirada"), no existe un mecanismo transparente de *refresh token*, forzando al usuario a re-loguearse.
 
 ---
 
@@ -94,8 +94,8 @@ Justificación de tecnologías elegidas, alternativas que se pueden inferir del 
 | Área | Decisión actual | Coste / riesgo |
 |------|------------------|----------------|
 | Estado | Provider + setState | Escalable hasta cierto tamaño; sin DI formal. |
-| API | Un cliente, métodos estáticos | Acoplamiento UI–API; sin interceptors (refresh, 401). |
-| Auth | id-session en SharedPreferences | Sesión en claro; sin refresh token. |
+| API | Un cliente, métodos estáticos | Acoplamiento UI–API; interceptor de 401 manual. |
+| Auth | id-session en SharedPreferences | Sesión en claro; sin refresh token (fuerza relogin). |
 | Navegación | Solo Navigator imperativo | Sin deep links ni rutas nombradas explícitas. |
 | Parsing | Manual + rawData | Duplicación y fragilidad ante cambios del backend. |
 | Tests | Mínimos | Refactors y cambios de API más arriesgados. |

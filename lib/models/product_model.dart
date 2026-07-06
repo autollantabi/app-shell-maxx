@@ -24,6 +24,7 @@ class ProductModel {
   final String description;
   final String category;
   final int points;
+
   /// Cantidad de productos en este canje (informativo, no stock).
   final int? quantity;
   final String? imagePath; // RUTA (legacy)
@@ -33,40 +34,6 @@ class ProductModel {
 
   /// Obtiene la ruta de la imagen local basada en el nombre del producto
   String? get localImagePath {
-    final nameLower = name.toLowerCase();
-
-    // Mapeo de nombres de productos a imágenes locales
-    if (nameLower.contains('camiseta') || nameLower.contains('ferrari')) {
-      return 'assets/images/products/camiseta.png';
-    } else if (nameLower.contains('llavero')) {
-      return 'assets/images/products/llavero.png';
-    } else if (nameLower.contains('kfc')) {
-      return 'assets/images/products/bonokfc.png';
-    } else if (nameLower.contains('favorito')) {
-      return 'assets/images/products/bonofavorito.png';
-    } else if (nameLower.contains('comisariato') ||
-        nameLower.contains('mi comisariato')) {
-      return 'assets/images/products/bonomicomisariato.png';
-    } else if (nameLower.contains('cube')) {
-      return 'assets/images/products/bonocube.png';
-    } else if (nameLower.contains('microondas')) {
-      return 'assets/images/products/microondas.png';
-    } else if (nameLower.contains('televisión') ||
-        nameLower.contains('television') ||
-        nameLower.contains('tv')) {
-      return 'assets/images/products/television.png';
-    } else if (nameLower.contains('cafetera')) {
-      return 'assets/images/products/cafetera.png';
-    } else if (nameLower.contains('dispensador')) {
-      return 'assets/images/products/dispensador.png';
-    } else if (nameLower.contains('auto') ||
-        nameLower.contains('autito') ||
-        nameLower.contains('miniauto')) {
-      return 'assets/images/products/miniauto.png';
-    } else if (nameLower.contains('gorra')) {
-      return 'assets/images/products/gorra.png';
-    }
-
     return null;
   }
 
@@ -90,7 +57,9 @@ class ProductModel {
     final category = json['CATEGORY'] ?? json['category'] ?? '';
     final points = json['POINTS'] ?? json['points'] ?? 0;
     final quantityRaw = json['QUANTITY'] ?? json['quantity'];
-    final quantity = quantityRaw != null ? int.tryParse(quantityRaw.toString()) : null;
+    final quantity = quantityRaw != null
+        ? int.tryParse(quantityRaw.toString())
+        : null;
     final imagePath = json['RUTA'] ?? json['ruta'] ?? json['imagePath'];
 
     // Parsear ROUTES

@@ -14,6 +14,7 @@ class UserModel {
   final String? managerId; // ID del manager que gestiona este influencer
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool yaCanjeoRecompensaAnual;
 
   UserModel({
     required this.id,
@@ -29,6 +30,7 @@ class UserModel {
     this.managerId,
     required this.createdAt,
     required this.updatedAt,
+    this.yaCanjeoRecompensaAnual = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -40,7 +42,7 @@ class UserModel {
     final email = json['EMAIL'] ?? json['email'] ?? '';
     final cardId = json['CARD_ID'] ?? json['cardId'] ?? json['cedula'];
     final phone = json['PHONE'] ?? json['phone'];
-    final birthDate = json['BIRTH_DATE'] ?? json['birthDate'] ?? json['dateOfBirth'];
+    final birthDate = json['birth_date'] ?? json['BIRTH_DATE'] ?? json['birthDate'] ?? json['dateOfBirth'];
     final roleId = json['ROLE_ID'] ?? json['roleId'] ?? json['type'];
     
     // Mapear ROLE_ID a UserType y guardar el ROLE_ID original
@@ -104,6 +106,7 @@ class UserModel {
       updatedAt: DateTime.parse(
         json['updatedAt'] ?? json['UPDATED_AT'] ?? DateTime.now().toIso8601String(),
       ),
+      yaCanjeoRecompensaAnual: json['yaCanjeoRecompensaAnual'] as bool? ?? false,
     );
   }
 
@@ -122,6 +125,7 @@ class UserModel {
       'managerId': managerId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'yaCanjeoRecompensaAnual': yaCanjeoRecompensaAnual,
     };
   }
 
@@ -139,6 +143,7 @@ class UserModel {
     String? managerId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? yaCanjeoRecompensaAnual,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -154,6 +159,7 @@ class UserModel {
       managerId: managerId ?? this.managerId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      yaCanjeoRecompensaAnual: yaCanjeoRecompensaAnual ?? this.yaCanjeoRecompensaAnual,
     );
   }
 

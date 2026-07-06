@@ -31,7 +31,8 @@ Todas las llamadas pasan por `ApiConfig.get`, `post`, `put`, `patch`, `delete` o
 ## Autenticación
 
 - **Mecanismo**: sesión por identificador. El backend devuelve `idSession` en la respuesta de login; la app lo guarda con `ApiConfig.setIdSession(idSession)` y lo envía en el header **`id-session`** en todas las peticiones autenticadas.
-- No se usa Bearer JWT ni refresh token en el código actual; la persistencia de sesión es local (SharedPreferences) hasta que el usuario cierra sesión o se limpia la app.
+- Si el backend devuelve un código 401 (Unauthorized), `ApiConfig` intercepta la respuesta y notifica al `AuthService` para lanzar el flujo de sesión expirada (`SessionExpiredPopup`).
+- No se usa Bearer JWT ni refresh token en el código actual; la persistencia de sesión es local (SharedPreferences) hasta que el usuario cierra sesión, la sesión expira (HTTP 401) o se limpia la app.
 
 ---
 
@@ -76,6 +77,7 @@ Los “servicios” que consume la app se agrupan en módulos bajo `lib/api/`. A
 | `/usuarios/search-influencer` | POST | Buscar influencer por email | Body: `email`. Add influencer. |
 | `/usuarios/influencer` | POST | Agregar influencer | Body: influencerData. |
 | `/usuarios/$userId` | PATCH | Actualizar influencer | Body: influencerData. |
+| `/usuarios/$userId` | GET | Obtener un usuario por su ID | Perfil o validaciones adicionales. |
 
 **Servicios/pantallas**: `ProfilePage`, `AddressesPage`, `ChangePasswordPage`, `ManagersPage`, `ManagerInfluencersPage`, `AddInfluencerPage`, `AssociatedProfilesPage`, y flujo de login (crear contraseña vía `updatePassword`).
 
@@ -93,6 +95,7 @@ Los “servicios” que consume la app se agrupan en módulos bajo `lib/api/`. A
 | `/points/stats` | GET | Estadísticas de puntos | Query: startDate, endDate. |
 | `/canjes/mis-canjes` | GET | Mis canjes (historial) | Redeemed prizes. |
 | `/canjes` | POST | Canjear un producto | Body: `productId`, `addressId` (opcional), `comments`, `quantity`. Vendedor puede enviar sin `addressId`. |
+| `/puntos/bonus/$userId` | POST | Reclamar bono de cumpleaños | Flujo de cumpleaños (`BirthdayService`). |
 
 **Servicios/pantallas**: `PointsProvider`, `ProductDetailPage` (canje), `RedeemedPrizesPage`, Home y Gifts (muestra de puntos).
 
@@ -109,6 +112,17 @@ Los “servicios” que consume la app se agrupan en módulos bajo `lib/api/`. A
 | `/gifts/categories` | GET | Categorías de regalos | Expuesto; categorías de productos pueden venir también del listado. |
 
 **Servicios/pantallas**: `ProductsProvider`, `GiftsPage`, `ProductDetailPage`.
+
+---
+
+### 5. Notificaciones (`lib/api/notifications_api.dart`)
+
+| Endpoint | Método | Uso en la app | Notas |
+|----------|--------|----------------|-------|
+| `/notificaciones/me` | GET | Obtener notificaciones | Query: limit, offset, soloNoLeidas. |
+| `/notificaciones/$id/read` | PATCH | Marcar notificación como leída | Lista de notificaciones. |
+
+**Servicios/pantallas**: `NotificationsPage`.
 
 ---
 

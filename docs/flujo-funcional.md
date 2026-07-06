@@ -62,6 +62,7 @@ Descripción paso a paso de los flujos principales del sistema: autenticación, 
 2. **Puntos**:
    - **PointsProvider** se usa en Home, Gifts y Perfil. En `loadPoints()` primero intenta caché (SharedPreferences, TTL 1 h); si no hay o está expirado, llama a `PointsApi.getMyPoints()` → GET `/puntos/me`, actualiza estado y guarda en caché.
    - Pull-to-refresh y tras un canje se llama `PointsProvider.refresh()` (fuerza API).
+   - **Bono de Cumpleaños**: Se evalúa si es el cumpleaños del usuario y si no ha reclamado el bono en el año con `BirthdayService`. Si aplica, se muestra un `BirthdayPopup` y, al interactuar, llama a `PointsApi.claimBirthdayBonus(userId)`.
 3. **Productos**:
    - **ProductsProvider** en `loadProducts()` usa caché (1 h) si existe; si no, `GiftsApi.getGifts()` → GET `/productos` (con query opcional category, etc.). Los productos se agrupan por categoría en memoria.
 4. **ClubShellHome**: muestra saludo, tarjeta de puntos (disponibles, generados, extra), lista horizontal “Estos premios están listos para canjear” y carrusel de banners.
@@ -94,15 +95,23 @@ Descripción paso a paso de los flujos principales del sistema: autenticación, 
 1. **ProfilePage** recibe `user` y `onUserUpdated` desde MainLayout. Al cargar puede llamar a `AuthApi.getCurrentUser()` → GET `/auth/me` para refrescar datos y actualizar `user_session` y estado local.
 2. **Edición de avatar**: imagen desde galería/cámara con `image_picker`, recorte con `image_cropper`, envío con `UserApi.updateUserWithImage(...)` → PATCH multipart `/usuarios/$userId`. Tras éxito se actualiza el usuario local y `onUserUpdated(updatedUser)` para refrescar el layout.
 3. **Menú de perfil** (según rol):
-   - Direcciones, Premios canjeados, Ayuda, Política de privacidad, Cambiar contraseña: comunes.
-   - Managers: para vendedores (lista de managers del vendedor).
-   - Influencers: para managers (lista de influencers del manager); opción de añadir influencer (búsqueda por email y asociación).
+   - **Comunes**: Direcciones, Premios canjeados, Gana Puntos Extra (Trivia, Participaciones, Cómo Participar), Ayuda, Política de privacidad, Cambiar contraseña.
+   - **Managers**: para vendedores (lista de managers del vendedor).
+   - **Influencers**: para managers (lista de influencers del manager); opción de añadir influencer (búsqueda por email y asociación).
 4. **Cambiar contraseña**: **ChangePasswordPage** → `UserApi.changePassword(userId, currentPassword, newPassword)` → POST `/usuarios/change-password`.
-5. **Cerrar sesión**:
-   - Se llama a `AuthService.logout()`: elimina `user_session`, `is_logged_in`, caché de productos y puntos, y `ApiConfig.clearIdSession()`.
-   - Navegación: en el código actual se usa `Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false)`. Como no hay rutas nombradas, en la práctica esto lleva al `home` del MaterialApp, que es `AuthWrapper`; al no haber sesión, AuthWrapper muestra `IntroPage` → Login.
+5. **Cerrar sesión y sesión expirada**:
+   - **Logout manual**: Se llama a `AuthService.logout()`: elimina `user_session`, `is_logged_in`, caché de productos y puntos, y `ApiConfig.clearIdSession()`. Se navega al login.
+   - **Sesión expirada**: Si la API devuelve un status `401 Unauthorized`, `ApiConfig` notifica al `AuthService`, el cual levanta un `SessionExpiredPopup`. Cuando el usuario lo cierra, se le hace un logout automático y se le redirige al login.
 
 **Autorización**: todas las acciones de perfil usan `id-session`; el backend restringe por usuario. Managers y vendedores ven opciones adicionales según `roleId` (1 o 2).
+
+---
+
+## 7. Flujo de Notificaciones
+
+1. **Recepción**: Las notificaciones se obtienen a través de `NotificationsApi.getMyNotifications()`.
+2. **Visualización**: Se muestran en una pantalla dedicada (`NotificationsPage`). Las notificaciones pueden filtrarse por leídas y no leídas (ej. `soloNoLeidas=true`).
+3. **Interacción**: Al tocar una notificación, se invoca `NotificationsApi.markAsRead(id)` y se actualiza el estado local de la lista.
 
 ---
 

@@ -100,7 +100,7 @@ class _CategoryTabWidgetState extends State<_CategoryTabWidget>
 
 class GiftsPage extends StatefulWidget {
   final UserModel user;
-  final Function(UserModel)? onUserUpdated;
+  final void Function(UserModel)? onUserUpdated;
 
   const GiftsPage({super.key, required this.user, this.onUserUpdated});
 
@@ -428,8 +428,10 @@ class _GiftsPageState extends State<GiftsPage> with TickerProviderStateMixin {
                 final categories = productsProvider.categories;
 
                 if (categories.isEmpty || _tabController == null) {
-                  return const Center(
-                    child: Text('No hay productos disponibles'),
+                  return const Expanded(
+                    child: Center(
+                      child: Text('No hay premios disponibles para canjear'),
+                    ),
                   );
                 }
 

@@ -19,7 +19,8 @@ class PointsProvider with ChangeNotifier {
   static const String _cacheAccumulatedKey = 'cached_accumulated_points';
   static const String _cacheTotalPointsKey = 'cached_total_points';
   static const String _cacheExtraPointsKey = 'cached_extra_points';
-  static const String _cacheAvailableWithoutExtrasKey = 'cached_available_without_extras';
+  static const String _cacheAvailableWithoutExtrasKey =
+      'cached_available_without_extras';
   static const String _cacheTimestampKey = 'cached_points_timestamp';
   static const Duration _cacheValidDuration = Duration(
     hours: 1,
@@ -44,7 +45,9 @@ class PointsProvider with ChangeNotifier {
       final cachedAccumulatedPoints = prefs.getInt(_cacheAccumulatedKey);
       final cachedTotalPoints = prefs.getInt(_cacheTotalPointsKey);
       final cachedExtraPoints = prefs.getInt(_cacheExtraPointsKey);
-      final cachedAvailableWithoutExtras = prefs.getInt(_cacheAvailableWithoutExtrasKey);
+      final cachedAvailableWithoutExtras = prefs.getInt(
+        _cacheAvailableWithoutExtrasKey,
+      );
       final timestampStr = prefs.getString(_cacheTimestampKey);
 
       if (cachedPoints != null && timestampStr != null) {
@@ -64,6 +67,7 @@ class PointsProvider with ChangeNotifier {
         }
       }
     } catch (e) {
+      // ignore: avoid_print
     }
     return false;
   }
@@ -84,13 +88,15 @@ class PointsProvider with ChangeNotifier {
       await prefs.setInt(_cacheAccumulatedKey, accumulatedPoints);
       await prefs.setInt(_cacheTotalPointsKey, totalPoints);
       await prefs.setInt(_cacheExtraPointsKey, extraPoints);
-      await prefs.setInt(_cacheAvailableWithoutExtrasKey, availableWithoutExtras);
+      await prefs.setInt(
+        _cacheAvailableWithoutExtrasKey,
+        availableWithoutExtras,
+      );
       await prefs.setString(
         _cacheTimestampKey,
         DateTime.now().toIso8601String(),
       );
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /// Cargar puntos desde la API
@@ -134,11 +140,14 @@ class PointsProvider with ChangeNotifier {
       if (apiResponse.success && data != null) {
         final availablePoints = data['availablePoints'] as int? ?? 0;
         final currentMonthPoints = data['currentMonthPoints'] as int? ?? 0;
-        final accumulatedPoints = data['accumulatedPoints'] as int? ??
-            data['puntosAcumulados'] as int? ?? 0;
+        final accumulatedPoints =
+            data['accumulatedPoints'] as int? ??
+            data['puntosAcumulados'] as int? ??
+            0;
         final totalPoints = data['totalPoints'] as int? ?? 0;
         final extraPoints = data['extraPoints'] as int? ?? 0;
-        final availableWithoutExtras = data['availableWithoutExtras'] as int? ?? 0;
+        final availableWithoutExtras =
+            data['availableWithoutExtras'] as int? ?? 0;
 
         _availablePoints = availablePoints;
         _currentMonthPoints = currentMonthPoints;
@@ -187,11 +196,15 @@ class PointsProvider with ChangeNotifier {
     int? newAvailableWithoutExtras,
   }) {
     _availablePoints = newPoints;
-    if (newCurrentMonthPoints != null) _currentMonthPoints = newCurrentMonthPoints;
+    if (newCurrentMonthPoints != null) {
+      _currentMonthPoints = newCurrentMonthPoints;
+    }
     if (newAccumulatedPoints != null) _accumulatedPoints = newAccumulatedPoints;
     if (newTotalPoints != null) _totalPoints = newTotalPoints;
     if (newExtraPoints != null) _extraPoints = newExtraPoints;
-    if (newAvailableWithoutExtras != null) _availableWithoutExtras = newAvailableWithoutExtras;
+    if (newAvailableWithoutExtras != null) {
+      _availableWithoutExtras = newAvailableWithoutExtras;
+    }
     _savePointsToCache(
       newPoints,
       _currentMonthPoints,
@@ -219,8 +232,7 @@ class PointsProvider with ChangeNotifier {
       await prefs.remove(_cacheExtraPointsKey);
       await prefs.remove(_cacheAvailableWithoutExtrasKey);
       await prefs.remove(_cacheTimestampKey);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /// Resetear estado del provider (útil al hacer logout)

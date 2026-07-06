@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/api_response.dart';
+import 'services/auth_service.dart';
 
 /// Configuración centralizada de la API
 class ApiConfig {
@@ -308,6 +309,7 @@ class ApiConfig {
   static ApiResponse<T> parseResponse<T>(
     http.Response response, {
     T Function(Map<String, dynamic>)? dataParser,
+    bool check401 = true,
   }) {
     try {
       if (response.body.isEmpty) {
@@ -334,6 +336,11 @@ class ApiConfig {
 
       // Si el status code no es exitoso, crear respuesta de error
       if (!isSuccess(response)) {
+        // Si es 401 (Unauthorized) y check401 es verdadero, notificar expiración de sesión
+        if (response.statusCode == 401 && check401) {
+          AuthService.instance.notifySessionExpired();
+        }
+
         // Si hay un mensaje de error, usarlo
         final errorMessage =
             jsonData['message'] as String? ??
@@ -414,7 +421,7 @@ class ApiConfig {
         includeAuth: includeAuth,
         additionalHeaders: additionalHeaders,
       );
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
@@ -437,7 +444,7 @@ class ApiConfig {
         includeAuth: includeAuth,
         additionalHeaders: additionalHeaders,
       );
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
@@ -460,7 +467,7 @@ class ApiConfig {
         includeAuth: includeAuth,
         additionalHeaders: additionalHeaders,
       );
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
@@ -483,7 +490,7 @@ class ApiConfig {
         includeAuth: includeAuth,
         additionalHeaders: additionalHeaders,
       );
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
@@ -552,7 +559,7 @@ class ApiConfig {
       // Convertir streamed response a response normal
       final response = await http.Response.fromStream(streamedResponse);
 
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),
@@ -573,7 +580,7 @@ class ApiConfig {
         includeAuth: includeAuth,
         additionalHeaders: additionalHeaders,
       );
-      return parseResponse<T>(response, dataParser: dataParser);
+      return parseResponse<T>(response, dataParser: dataParser, check401: includeAuth);
     } catch (e) {
       return ApiResponse<T>.error(
         message: handleConnectionError(e),

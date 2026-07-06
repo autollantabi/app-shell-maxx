@@ -20,11 +20,12 @@ import 'addresses_page.dart';
 import 'help_page.dart';
 import 'redeemed_prizes_page.dart';
 import 'managers_page.dart';
+import 'earn_extra_points_page.dart';
 import '../onboarding/onboarding_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final UserModel user;
-  final Function(UserModel)? onUserUpdated;
+  final void Function(UserModel)? onUserUpdated;
 
   const ProfilePage({super.key, required this.user, this.onUserUpdated});
 
@@ -316,6 +317,15 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
+                // Solo mostrar "Gana puntos extra" si es influenciador (Rol 3)
+                if (_currentUser.isInfluenciadorByRole)
+                  _buildProfileOption(
+                    icon: Icons.star,
+                    title: 'Gana puntos extra',
+                    borderColor: AppColors.primary,
+                    badgeText: 'Nuevo',
+                    onTap: () => _handleEarnExtraPoints(context),
+                  ),
                 // Solo mostrar "Mis direcciones" si NO es vendedor
                 if (!_currentUser.isVendedorByRole)
                   _buildProfileOption(
@@ -459,61 +469,97 @@ class _ProfilePageState extends State<ProfilePage> {
     String? imagePath,
     required String title,
     required VoidCallback onTap,
+    Color? borderColor,
+    String? badgeText,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 5),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+      decoration: borderColor != null
+          ? BoxDecoration(
+              border: Border.all(color: borderColor, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+            )
+          : null,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderColor != null ? 10 : 12),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderColor != null ? 10 : 12),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(borderColor != null ? 10 : 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 20,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: imagePath != null
+                        ? Image.asset(
+                            imagePath,
+                            width: 20,
+                            height: 20,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                icon ?? Icons.image,
+                                color: AppColors.secondary,
+                                size: 20,
+                              );
+                            },
+                          )
+                        : Icon(
+                            icon ?? Icons.help_outline,
+                            color: AppColors.secondary,
+                            size: 20,
+                          ),
                   ),
-                  child: imagePath != null
-                      ? Image.asset(
-                          imagePath,
-                          width: 20,
-                          height: 20,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              icon ?? Icons.image,
-                              color: AppColors.secondary,
-                              size: 20,
-                            );
-                          },
-                        )
-                      : Icon(
-                          icon ?? Icons.help_outline,
-                          color: AppColors.secondary,
-                          size: 20,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'ShellTHAI',
+                          ),
                         ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'ShellTHAI',
+                        if (badgeText != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontFamily: 'ShellHeavy',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppColors.textPrimary,
-                ),
-              ],
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: AppColors.textPrimary,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -526,61 +572,70 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _handleChangeAddress(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => AddressesPage(user: _currentUser),
       ),
     );
   }
 
-  void _handleChangePassword(BuildContext context) {
-    Navigator.push(
+  void _handleEarnExtraPoints(BuildContext context) {
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
+        builder: (context) => EarnExtraPointsPage(user: _currentUser),
+      ),
+    );
+  }
+
+  void _handleChangePassword(BuildContext context) {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
         builder: (context) => ChangePasswordPage(user: _currentUser),
       ),
     );
   }
 
   void _handleAssociatedProfiles(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => AssociatedProfilesPage(user: _currentUser),
       ),
     );
   }
 
   void _handleManagers(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => ManagersPage(user: _currentUser),
       ),
     );
   }
 
   void _handleShowOnboarding(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => OnboardingPage(user: _currentUser),
       ),
     );
   }
 
   void _handleHelp(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(builder: (context) => const HelpPage()),
+      MaterialPageRoute<void>(builder: (context) => const HelpPage()),
     );
   }
 
   void _handleRedeemedPrizes(BuildContext context) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(builder: (context) => const RedeemedPrizesPage()),
+      MaterialPageRoute<void>(builder: (context) => const RedeemedPrizesPage()),
     );
   }
 
