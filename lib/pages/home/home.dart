@@ -10,6 +10,7 @@ import '../../contexts/points_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/product_card.dart';
 import '../../services/birthday_service.dart';
+import '../../services/points_service.dart';
 
 /// Widget para la lista de productos del home que mantiene el estado vivo
 class _HomeProductsList extends StatefulWidget {
@@ -228,9 +229,21 @@ class _ClubShellHomeState extends State<ClubShellHome> {
             _currentUser = updatedUser;
           });
 
-          // Verificar cumpleaños
+          
           if (mounted) {
+            // Verificar cumpleaños
             BirthdayService.checkAndShowBirthdayGift(
+              context,
+              updatedUser,
+              onRefresh: () {
+                if (mounted) {
+                  context.read<PointsProvider>().refresh();
+                }
+              },
+            );
+
+            //verificacion de puntos de usuario (regalo de puntos, independiente del cumpleaños)
+            PointsService.checkAndShowPointsGift(
               context,
               updatedUser,
               onRefresh: () {

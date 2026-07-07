@@ -128,4 +128,18 @@ class PointsApi {
       '/puntos/bonus/$userId',
     );
   }
+
+  /// Obtener mis regalos de puntos pendientes (no canjeados)
+  /// GET /puntos/regalo/me
+  static Future<ApiResponse<Map<String, dynamic>>> getMyGiftPoints() async {
+    return await ApiConfig.getResponse<Map<String, dynamic>>('/puntos/regalo/me');
+  }
+
+  /// Canjear un regalo de puntos
+  /// POST /puntos/regalo/{giftId}/canjear
+  static Future<ApiResponse<Map<String, dynamic>>> redeemGiftPoints(String giftId) async {
+    return await ApiConfig.postResponse<Map<String, dynamic>>(
+      '/puntos/regalo/$giftId/canjear',
+    );
+  }
 }
