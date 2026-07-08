@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../models/user_model.dart';
+import '../../models/product_model.dart';
 import '../../api/user_api.dart';
 import '../../api/points_api.dart';
+import '../../api/gifts_api.dart';
 import '../../contexts/points_provider.dart';
 import '../../utils/failed_image_cache.dart';
 
@@ -19,6 +21,9 @@ class ProductDetailPage extends StatefulWidget {
   final int availablePoints;
   final String? productId;
 
+  /// Especificación (talla) del producto. Si es null, no se muestra selector.
+  final SpecificationModel? specification;
+
   const ProductDetailPage({
     super.key,
     required this.user,
@@ -30,6 +35,7 @@ class ProductDetailPage extends StatefulWidget {
     required this.category,
     this.availablePoints = 0,
     this.productId,
+    this.specification,
   });
 
   @override
@@ -44,10 +50,122 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isRedeeming = false;
   int _quantity = 1;
 
+  /// Talla seleccionada por el usuario (cuando el producto tiene especificación).
+  String? _selectedSize;
+
+  /// Especificación (talla) vigente. Se inicializa con la que llega desde la
+  /// lista (posiblemente cacheada) y se refresca con datos frescos del backend.
+  SpecificationModel? _specification;
+
+  /// True si el producto requiere que se elija una talla.
+  bool get _requiresSize =>
+      _specification != null && _specification!.values.isNotEmpty;
+
+  /// Consulta el producto por ID para obtener su especificación actualizada,
+  /// evitando depender del caché de la lista de productos.
+  Future<void> _refreshSpecification() async {
+    final productId = widget.productId;
+    if (productId == null || productId.isEmpty) return;
+
+    try {
+      final response = await GiftsApi.getProductById(productId);
+      if (!mounted || !response.success || response.data == null) return;
+
+      final product = ProductModel.fromJson(response.data!);
+      final fresh = product.specification;
+
+      // Solo actualizar si cambió, para no reconstruir innecesariamente.
+      final changed =
+          (fresh?.id ?? '') != (_specification?.id ?? '') ||
+          (fresh?.values.length ?? 0) != (_specification?.values.length ?? 0);
+      if (changed) {
+        setState(() {
+          _specification = fresh;
+          // Si la talla seleccionada ya no es válida, limpiarla.
+          if (_selectedSize != null &&
+              !(fresh?.values.contains(_selectedSize) ?? false)) {
+            _selectedSize = null;
+          }
+        });
+      }
+    } catch (_) {
+      // Silencioso: si falla, se conserva la especificación inicial.
+    }
+  }
+
+  /// Selector de talla para productos con especificación (ej. prendas de vestir).
+  Widget _buildSizeSelector() {
+    final spec = _specification!;
+    final label = spec.name.isNotEmpty ? spec.name : 'Talla';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontFamily: 'ShellBook',
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.grey[300]!, width: 1),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedSize,
+              isExpanded: true,
+              hint: const Text(
+                'Seleccionar talla',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'ShellBook',
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              icon: const Icon(Icons.keyboard_arrow_down),
+              items: spec.values
+                  .map(
+                    (size) => DropdownMenuItem<String>(
+                      value: size,
+                      child: Text(
+                        size,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'ShellBook',
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedSize = value;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _specification = widget.specification;
+    // Refrescar la especificación con datos frescos del backend (evita el caché
+    // de la lista, que puede no traer la talla si se asignó recientemente).
+    _refreshSpecification();
   }
 
   @override
@@ -308,6 +426,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ),
                             ],
                           ),
+                          // Selector de talla (solo si el producto tiene especificación)
+                          if (_requiresSize) ...[
+                            const SizedBox(height: 16),
+                            _buildSizeSelector(),
+                          ],
                           const SizedBox(height: 16),
                           // Contador de cantidad y botón canjear
                           Row(
@@ -389,7 +512,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   child: ElevatedButton(
                                     onPressed:
                                         (_isRedeeming ||
-                                            (widget.points * _quantity) > widget.availablePoints)
+                                            (widget.points * _quantity) > widget.availablePoints ||
+                                            (_requiresSize && _selectedSize == null))
                                         ? null
                                         : () {
                                             _navigateToSuccessPage(context);
@@ -680,6 +804,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         addressId: addressId,
         comments: '',
         quantity: _quantity,
+        specificationValue: _selectedSize,
       );
 
       if (mounted) {

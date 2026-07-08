@@ -103,16 +103,22 @@ class PointsApi {
     int? addressId,
     String comments = '',
     int quantity = 1,
+    String? specificationValue,
   }) async {
     final body = <String, dynamic>{
       'productId': productId,
       'comments': comments,
       'quantity': quantity,
     };
-    
+
     // Solo agregar addressId si no es null (para vendedores será null)
     if (addressId != null) {
       body['addressId'] = addressId;
+    }
+
+    // Talla seleccionada (solo productos con especificación)
+    if (specificationValue != null && specificationValue.isNotEmpty) {
+      body['specificationValue'] = specificationValue;
     }
     
     return await ApiConfig.postResponse<Map<String, dynamic>>(

@@ -64,6 +64,7 @@ class ProductCard extends StatelessWidget {
               category: product.category,
               availablePoints: context.watch<PointsProvider>().availablePoints,
               productId: product.id,
+              specification: product.specification,
             ),
           ),
         );

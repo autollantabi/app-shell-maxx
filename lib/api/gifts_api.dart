@@ -39,6 +39,16 @@ class GiftsApi {
     return await ApiConfig.getResponse<Map<String, dynamic>>('/gifts/$giftId');
   }
 
+  /// Obtener un producto por ID (datos frescos, sin caché de lista)
+  /// GET /productos/{id}
+  static Future<ApiResponse<Map<String, dynamic>>> getProductById(
+    String productId,
+  ) async {
+    return await ApiConfig.getResponse<Map<String, dynamic>>(
+      '/productos/$productId',
+    );
+  }
+
   /// Canjear un regalo/producto
   static Future<ApiResponse<Map<String, dynamic>>> redeemGift({
     required String giftId,
