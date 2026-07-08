@@ -93,68 +93,211 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
-  /// Selector de talla para productos con especificación (ej. prendas de vestir).
-  Widget _buildSizeSelector() {
-    final spec = _specification!;
-    final label = spec.name.isNotEmpty ? spec.name : 'Talla';
+  // Paleta del diseño "Selector de talla" (Claude Design)
+  static const Color _dsRed = Color(0xFFDA291C);
+  static const Color _dsYellow = Color(0xFFF6C000);
+  static const Color _dsYellowText = Color(0xFF3A2F00);
+  static const Color _dsText = Color(0xFF2F333D);
+  static const Color _dsFieldBg = Color(0xFFF4F5F6);
+  static const Color _dsBorder = Color(0xFFE4E5E7);
+  static const Color _dsPlaceholder = Color(0xFF9AA0AA);
+  static const Color _dsChevron = Color(0xFF8A8F99);
+  static const Color _dsSubtitle = Color(0xFF868B95);
+  static const Color _dsGrabber = Color(0xFFDCDEE1);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'ShellBook',
-            color: AppColors.textPrimary,
+  /// Campo del selector de talla: pastilla que abre la hoja inferior de tallas.
+  Widget _buildSizeSelector() {
+    final bool hasSelection = _selectedSize != null;
+
+    return GestureDetector(
+      onTap: _openSizeSheet,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: hasSelection ? 10 : 15,
+        ),
+        decoration: BoxDecoration(
+          color: hasSelection ? Colors.white : _dsFieldBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: hasSelection ? _dsRed : _dsBorder,
+            width: 1.5,
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey[300]!, width: 1),
+        child: Row(
+          children: [
+            Expanded(
+              child: hasSelection
+                  // Con talla elegida: etiqueta "Seleccionar talla" arriba del valor.
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Seleccionar talla',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'ShellBook',
+                            color: _dsPlaceholder,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedSize!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'ShellHeavy',
+                            color: _dsText,
+                          ),
+                        ),
+                      ],
+                    )
+                  // Sin talla: placeholder.
+                  : const Text(
+                      'Seleccionar talla',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'ShellBook',
+                        color: _dsPlaceholder,
+                      ),
+                    ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 22,
+              color: _dsChevron,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Hoja inferior (bottom sheet) con los chips de tallas y confirmación.
+  void _openSizeSheet() {
+    final spec = _specification;
+    if (spec == null || spec.values.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x6B181A20), // rgba(24,26,32,0.42)
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedSize,
-              isExpanded: true,
-              hint: const Text(
-                'Seleccionar talla',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'ShellBook',
-                  color: AppColors.textSecondary,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            26 + MediaQuery.of(ctx).viewPadding.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Grabber
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: _dsGrabber,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
-              icon: const Icon(Icons.keyboard_arrow_down),
-              items: spec.values
-                  .map(
-                    (size) => DropdownMenuItem<String>(
-                      value: size,
+              const Text(
+                'Selecciona tu talla',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontFamily: 'ShellHeavy',
+                  color: _dsText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontFamily: 'ShellBook',
+                  color: _dsSubtitle,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Grid de tallas (3 columnas). Al tocar una talla se selecciona
+              // automáticamente y se cierra la hoja (sin botón de confirmar).
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 2.0,
+                children: spec.values.map((size) {
+                  final bool isSel = _selectedSize == size;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedSize = size);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSel ? _dsYellow : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSel ? _dsYellow : _dsBorder,
+                          width: 1.5,
+                        ),
+                      ),
                       child: Text(
                         size,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontFamily: 'ShellBook',
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontFamily: 'ShellHeavy',
+                          color: isSel ? _dsYellowText : _dsText,
                         ),
                       ),
                     ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedSize = value;
-                });
-              },
-            ),
+                  );
+                }).toList(),
+              ),
+              // Botón "Confirmar talla" comentado: la selección ahora es automática
+              // al tocar una talla, por lo que este botón ya no se muestra.
+              /*
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _dsYellow,
+                    disabledBackgroundColor: const Color(0xFFF0F1F2),
+                    foregroundColor: _dsYellowText,
+                    disabledForegroundColor: const Color(0xFFB9BDC4),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text(
+                    'Confirmar talla',
+                    style: TextStyle(fontSize: 17, fontFamily: 'ShellHeavy'),
+                  ),
+                ),
+              ),
+              */
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
