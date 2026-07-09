@@ -268,6 +268,7 @@ class _ClubShellHomeState extends State<ClubShellHome> {
   Future<void> _handleRefresh() async {
     await _loadUserData();
     await context.read<PointsProvider>().refresh();
+    await context.read<ProductsProvider>().refresh();
   }
 
   // Métodos helper para validar tipo de usuario según ROLE_ID

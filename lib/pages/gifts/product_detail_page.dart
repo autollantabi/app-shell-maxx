@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../models/user_model.dart';
+import '../../models/product_model.dart';
 import '../../api/user_api.dart';
 import '../../api/points_api.dart';
+import '../../api/gifts_api.dart';
 import '../../contexts/points_provider.dart';
 import '../../utils/failed_image_cache.dart';
 
@@ -19,6 +21,9 @@ class ProductDetailPage extends StatefulWidget {
   final int availablePoints;
   final String? productId;
 
+  /// Especificación (talla) del producto. Si es null, no se muestra selector.
+  final SpecificationModel? specification;
+
   const ProductDetailPage({
     super.key,
     required this.user,
@@ -30,6 +35,7 @@ class ProductDetailPage extends StatefulWidget {
     required this.category,
     this.availablePoints = 0,
     this.productId,
+    this.specification,
   });
 
   @override
@@ -44,10 +50,265 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isRedeeming = false;
   int _quantity = 1;
 
+  /// Talla seleccionada por el usuario (cuando el producto tiene especificación).
+  String? _selectedSize;
+
+  /// Especificación (talla) vigente. Se inicializa con la que llega desde la
+  /// lista (posiblemente cacheada) y se refresca con datos frescos del backend.
+  SpecificationModel? _specification;
+
+  /// True si el producto requiere que se elija una talla.
+  bool get _requiresSize =>
+      _specification != null && _specification!.values.isNotEmpty;
+
+  /// Consulta el producto por ID para obtener su especificación actualizada,
+  /// evitando depender del caché de la lista de productos.
+  Future<void> _refreshSpecification() async {
+    final productId = widget.productId;
+    if (productId == null || productId.isEmpty) return;
+
+    try {
+      final response = await GiftsApi.getProductById(productId);
+      if (!mounted || !response.success || response.data == null) return;
+
+      final product = ProductModel.fromJson(response.data!);
+      final fresh = product.specification;
+
+      // Solo actualizar si cambió, para no reconstruir innecesariamente.
+      final changed =
+          (fresh?.id ?? '') != (_specification?.id ?? '') ||
+          (fresh?.values.length ?? 0) != (_specification?.values.length ?? 0);
+      if (changed) {
+        setState(() {
+          _specification = fresh;
+          // Si la talla seleccionada ya no es válida, limpiarla.
+          if (_selectedSize != null &&
+              !(fresh?.values.contains(_selectedSize) ?? false)) {
+            _selectedSize = null;
+          }
+        });
+      }
+    } catch (_) {
+      // Silencioso: si falla, se conserva la especificación inicial.
+    }
+  }
+
+  // Paleta del diseño "Selector de talla" (Claude Design)
+  static const Color _dsRed = Color(0xFFDA291C);
+  static const Color _dsYellow = Color(0xFFF6C000);
+  static const Color _dsYellowText = Color(0xFF3A2F00);
+  static const Color _dsText = Color(0xFF2F333D);
+  static const Color _dsFieldBg = Color(0xFFF4F5F6);
+  static const Color _dsBorder = Color(0xFFE4E5E7);
+  static const Color _dsPlaceholder = Color(0xFF9AA0AA);
+  static const Color _dsChevron = Color(0xFF8A8F99);
+  static const Color _dsSubtitle = Color(0xFF868B95);
+  static const Color _dsGrabber = Color(0xFFDCDEE1);
+
+  /// Campo del selector de talla: pastilla que abre la hoja inferior de tallas.
+  Widget _buildSizeSelector() {
+    final bool hasSelection = _selectedSize != null;
+
+    return GestureDetector(
+      onTap: _openSizeSheet,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: hasSelection ? 10 : 15,
+        ),
+        decoration: BoxDecoration(
+          color: hasSelection ? Colors.white : _dsFieldBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: hasSelection ? _dsRed : _dsBorder,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: hasSelection
+                  // Con talla elegida: etiqueta "Seleccionar talla" arriba del valor.
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Seleccionar talla',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'ShellBook',
+                            color: _dsPlaceholder,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedSize!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'ShellHeavy',
+                            color: _dsText,
+                          ),
+                        ),
+                      ],
+                    )
+                  // Sin talla: placeholder.
+                  : const Text(
+                      'Seleccionar talla',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'ShellBook',
+                        color: _dsPlaceholder,
+                      ),
+                    ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 22,
+              color: _dsChevron,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Hoja inferior (bottom sheet) con los chips de tallas y confirmación.
+  void _openSizeSheet() {
+    final spec = _specification;
+    if (spec == null || spec.values.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x6B181A20), // rgba(24,26,32,0.42)
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            26 + MediaQuery.of(ctx).viewPadding.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Grabber
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: _dsGrabber,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const Text(
+                'Selecciona tu talla',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontFamily: 'ShellHeavy',
+                  color: _dsText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontFamily: 'ShellBook',
+                  color: _dsSubtitle,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Grid de tallas (3 columnas). Al tocar una talla se selecciona
+              // automáticamente y se cierra la hoja (sin botón de confirmar).
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 2.0,
+                children: spec.values.map((size) {
+                  final bool isSel = _selectedSize == size;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedSize = size);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSel ? _dsYellow : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSel ? _dsYellow : _dsBorder,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        size,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontFamily: 'ShellHeavy',
+                          color: isSel ? _dsYellowText : _dsText,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              // Botón "Confirmar talla" comentado: la selección ahora es automática
+              // al tocar una talla, por lo que este botón ya no se muestra.
+              /*
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _dsYellow,
+                    disabledBackgroundColor: const Color(0xFFF0F1F2),
+                    foregroundColor: _dsYellowText,
+                    disabledForegroundColor: const Color(0xFFB9BDC4),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text(
+                    'Confirmar talla',
+                    style: TextStyle(fontSize: 17, fontFamily: 'ShellHeavy'),
+                  ),
+                ),
+              ),
+              */
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _specification = widget.specification;
+    // Refrescar la especificación con datos frescos del backend (evita el caché
+    // de la lista, que puede no traer la talla si se asignó recientemente).
+    _refreshSpecification();
   }
 
   @override
@@ -308,6 +569,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ),
                             ],
                           ),
+                          // Selector de talla (solo si el producto tiene especificación)
+                          if (_requiresSize) ...[
+                            const SizedBox(height: 16),
+                            _buildSizeSelector(),
+                          ],
                           const SizedBox(height: 16),
                           // Contador de cantidad y botón canjear
                           Row(
@@ -389,7 +655,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   child: ElevatedButton(
                                     onPressed:
                                         (_isRedeeming ||
-                                            (widget.points * _quantity) > widget.availablePoints)
+                                            (widget.points * _quantity) > widget.availablePoints ||
+                                            (_requiresSize && _selectedSize == null))
                                         ? null
                                         : () {
                                             _navigateToSuccessPage(context);
@@ -680,6 +947,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         addressId: addressId,
         comments: '',
         quantity: _quantity,
+        specificationValue: _selectedSize,
       );
 
       if (mounted) {

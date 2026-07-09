@@ -22,6 +22,7 @@ class RedeemedPrize {
   final bool isAvailable;
   final String?
   productId; // ID del producto para comparar con productos disponibles
+  final String? selectedSpecification; // Talla seleccionada en el canje
 
   RedeemedPrize({
     required this.id,
@@ -33,6 +34,7 @@ class RedeemedPrize {
     required this.quantity,
     required this.isAvailable,
     this.productId,
+    this.selectedSpecification,
   });
 }
 
@@ -274,6 +276,9 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
 
               final imageUrl = _getProductImageUrl(producto) ?? '';
 
+              final selectedSpecification =
+                  canje['SELECTED_SPECIFICATION'] as String?;
+
               prizes.add(
                 RedeemedPrize(
                   id: canjeId,
@@ -285,6 +290,11 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                   quantity: finalQuantity,
                   isAvailable: isActive,
                   productId: productId,
+                  selectedSpecification:
+                      (selectedSpecification != null &&
+                          selectedSpecification.isNotEmpty)
+                      ? selectedSpecification
+                      : null,
                 ),
               );
             }
@@ -464,6 +474,17 @@ class _RedeemedPrizesPageState extends State<RedeemedPrizesPage> {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                if (prize.selectedSpecification != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Talla: ${prize.selectedSpecification}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontFamily: 'ShellBook',
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [

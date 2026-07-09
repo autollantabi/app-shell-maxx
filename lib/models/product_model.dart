@@ -18,6 +18,56 @@ class ProductRoute {
   }
 }
 
+class SpecificationModel {
+  final String id;
+  final String name;
+  final List<String> values; // Tallas disponibles, ej. ["XS", "S", "M", ...]
+
+  SpecificationModel({
+    required this.id,
+    required this.name,
+    this.values = const [],
+  });
+
+  factory SpecificationModel.fromJson(Map<String, dynamic> json) {
+    // Parsear los valores (tallas). Cada valor puede venir como {VALUE, SORT_ORDER}
+    // o como string simple. Se ordena por SORT_ORDER cuando está disponible.
+    final rawValues = json['VALUES'] ?? json['values'];
+    final List<Map<String, dynamic>> parsed = [];
+    if (rawValues is List) {
+      for (final v in rawValues) {
+        if (v is Map<String, dynamic>) {
+          final value = (v['VALUE'] ?? v['value'] ?? '').toString();
+          if (value.isEmpty) continue;
+          final sortRaw = v['SORT_ORDER'] ?? v['sort_order'];
+          final sort = sortRaw != null
+              ? int.tryParse(sortRaw.toString()) ?? 0
+              : 0;
+          parsed.add({'value': value, 'sort': sort});
+        } else if (v != null) {
+          final value = v.toString();
+          if (value.isNotEmpty) {
+            parsed.add({'value': value, 'sort': parsed.length});
+          }
+        }
+      }
+    }
+    parsed.sort(
+      (a, b) => (a['sort'] as int).compareTo(b['sort'] as int),
+    );
+
+    return SpecificationModel(
+      id: (json['ID'] ?? json['id'] ?? '').toString(),
+      name: (json['NAME'] ?? json['name'] ?? '').toString(),
+      values: parsed.map((e) => e['value'] as String).toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'values': values};
+  }
+}
+
 class ProductModel {
   final String id;
   final String name;
@@ -29,6 +79,9 @@ class ProductModel {
   final int? quantity;
   final String? imagePath; // RUTA (legacy)
   final List<ProductRoute> routes; // ROUTES con {id, path, url}
+
+  /// Especificación (talla) asignada al producto. Null si no requiere talla.
+  final SpecificationModel? specification;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -46,6 +99,7 @@ class ProductModel {
     this.quantity,
     this.imagePath,
     this.routes = const [],
+    this.specification,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -78,6 +132,17 @@ class ProductModel {
       }
     }
 
+    // Parsear especificación (talla) si viene asignada al producto
+    SpecificationModel? specification;
+    final specData = json['SPECIFICATION'] ?? json['specification'];
+    if (specData is Map<String, dynamic>) {
+      specification = SpecificationModel.fromJson(specData);
+      // Ignorar especificaciones sin tallas disponibles
+      if (specification.values.isEmpty) {
+        specification = null;
+      }
+    }
+
     return ProductModel(
       id: id,
       name: name,
@@ -87,6 +152,7 @@ class ProductModel {
       quantity: quantity,
       imagePath: imagePath,
       routes: routes,
+      specification: specification,
       createdAt: DateTime.parse(
         json['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
@@ -106,6 +172,7 @@ class ProductModel {
       if (quantity != null) 'quantity': quantity,
       'ruta': imagePath,
       'routes': routes.map((route) => route.toJson()).toList(),
+      if (specification != null) 'specification': specification!.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
