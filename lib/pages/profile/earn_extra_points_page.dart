@@ -1,14 +1,74 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import 'trivia_futbolera_page.dart';
+import 'dynamic_detail_page.dart';
 import '../../widgets/custom_bottom_nav.dart';
 import '../../models/user_model.dart';
+import '../../models/extra_point_dynamic.dart';
 import '../../layouts/main_layout.dart';
+import '../../api.dart';
 
-class EarnExtraPointsPage extends StatelessWidget {
+class EarnExtraPointsPage extends StatefulWidget {
   final UserModel user;
 
   const EarnExtraPointsPage({super.key, required this.user});
+
+  @override
+  State<EarnExtraPointsPage> createState() => _EarnExtraPointsPageState();
+}
+
+class _EarnExtraPointsPageState extends State<EarnExtraPointsPage> {
+  bool _isLoading = true;
+  List<ExtraPointDynamic> _dynamics = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDynamics();
+  }
+
+  Future<void> _fetchDynamics() async {
+    try {
+      final response = await ApiConfig.getResponse(
+        '/influencer-dynamics/app/extra-points',
+      );
+
+      if (response.success && response.data is List) {
+        final list = (response.data as List)
+            .whereType<Map<String, dynamic>>()
+            .map(ExtraPointDynamic.fromJson)
+            .toList();
+        if (mounted) {
+          setState(() {
+            _dynamics = list;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _onDynamicTap(ExtraPointDynamic item) {
+    // Pantalla de detalle genérica: cualquier item disponible navega aquí.
+    // Los items no disponibles ya están bloqueados/no seleccionables en la lista.
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => DynamicDetailPage(user: widget.user, dynamic: item),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,107 +94,112 @@ class EarnExtraPointsPage extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Banner superior premium
-            Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(24),
+      body: RefreshIndicator(
+        onRefresh: _fetchDynamics,
+        color: AppColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Banner superior premium
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadowLight,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.shadowLight,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Elige como quieres sumar más puntos',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'ShellBook',
-                      color: AppColors.textSecondary,
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Elige como quieres sumar más puntos',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'ShellBook',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            // Opciones de ganar puntos
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _buildExtraOption(
-                    context: context,
-                    imagePath: 'assets/images/icons/triviaFutbolera.png',
-                    title: 'Trivias futboleras',
-                    subtitle:
-                        'Responde las trivias de cada semana y gana puntos.',
-                    badgeText: 'Más de 2000 puntos',
-                    badgeBgColor: Colors.green,
-                    onTap: () => Navigator.push<void>(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => TriviaFutboleraPage(user: user),
+              const SizedBox(height: 20),
+              // Opciones de ganar puntos
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
                       ),
                     ),
                   ),
-                  _buildExtraOption(
-                    context: context,
-                    imagePath: 'assets/images/icons/etiquetas.png',
-                    title: 'Etiquetas',
-                    subtitle:
-                        'Suma puntos por cada etiqueta de nuestros productos.',
-                    badgeText: 'Hasta 70 puntos',
-                    badgeBgColor: Colors.red,
-                    isLocked: true,
-                    onTap: () {},
+                )
+              else if (_dynamics.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                  child: Center(
+                    child: Text(
+                      'Por ahora no hay dinámicas disponibles.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'ShellBook',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                  _buildExtraOption(
-                    context: context,
-                    imagePath: 'assets/images/icons/retoShell.png',
-                    title: 'Reto Shell en el taller',
-                    subtitle:
-                        'Crea, publica y etiqueta para ganar puntos extras.',
-                    badgeText: 'Hasta 5 puntos',
-                    badgeBgColor: Colors.brown,
-                    isLocked: true,
-                    onTap: () {},
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: _dynamics
+                        .map(
+                          (item) => _buildExtraOption(
+                            iconUrl: item.iconUrl,
+                            fallbackAsset: item.iconAssetPath,
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            badgeText: item.badgeText,
+                            badgeBgColor: item.badgeColor,
+                            isLocked: !item.available,
+                            onTap: () => _onDynamicTap(item),
+                          ),
+                        )
+                        .toList(),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
+                ),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNav(
         currentIndex: 2, // Perfil
-        user: user,
+        user: widget.user,
         onTap: (index) {
           if (index == 2) {
             Navigator.of(context).popUntil((route) => route.isFirst);
@@ -142,7 +207,7 @@ class EarnExtraPointsPage extends StatelessWidget {
             Navigator.of(context).pushAndRemoveUntil<void>(
               MaterialPageRoute<void>(
                 builder: (context) =>
-                    MainLayout(user: user, initialIndex: index),
+                    MainLayout(user: widget.user, initialIndex: index),
               ),
               (route) => false,
             );
@@ -152,9 +217,31 @@ class EarnExtraPointsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildOptionIcon(String? iconUrl, String fallbackAsset) {
+    final fallback = Image.asset(fallbackAsset, fit: BoxFit.contain);
+    if (iconUrl == null || iconUrl.isEmpty) {
+      return fallback;
+    }
+    return Image.network(
+      iconUrl,
+      fit: BoxFit.contain,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => fallback,
+    );
+  }
+
   Widget _buildExtraOption({
-    required BuildContext context,
-    required String imagePath,
+    required String? iconUrl,
+    required String fallbackAsset,
     required String title,
     required String subtitle,
     required String badgeText,
@@ -188,7 +275,7 @@ class EarnExtraPointsPage extends StatelessWidget {
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Image.asset(imagePath, fit: BoxFit.contain),
+                        child: _buildOptionIcon(iconUrl, fallbackAsset),
                       ),
                       const SizedBox(width: 16),
                       // Texto central

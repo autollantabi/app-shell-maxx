@@ -10,10 +10,14 @@ class ParticipacionesPage extends StatefulWidget {
   final int triviaPoints;
   final UserModel user;
 
+  /// URL del quiz (p.ej. Instagram) que llega desde el back.
+  final String? instagramQuizUrl;
+
   const ParticipacionesPage({
     super.key,
     required this.triviaPoints,
     required this.user,
+    this.instagramQuizUrl,
   });
 
   @override
@@ -419,11 +423,15 @@ class _ParticipacionesPageState extends State<ParticipacionesPage> {
     );
   }
 
-  static const String _instagramQuizUrl =
+  static const String _fallbackInstagramQuizUrl =
       'https://www.instagram.com/shell.lubricantes.ec.md/';
 
   Future<void> _openInstagramQuiz(BuildContext context) async {
-    final uri = Uri.parse(_instagramQuizUrl);
+    final url =
+        (widget.instagramQuizUrl != null && widget.instagramQuizUrl!.isNotEmpty)
+        ? widget.instagramQuizUrl!
+        : _fallbackInstagramQuizUrl;
+    final uri = Uri.parse(url);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
